@@ -3,7 +3,7 @@ from kivy.graphics import Color, Line, Bezier
 from kivy.properties import ColorProperty, NumericProperty, ObjectProperty
 from collections import deque
 from kivy.core.window import Window
-from tools import ToolManager, Tool, BrushStyle
+from tools import ToolManager, Tool, BrushStyle, ShapeTool  # Add ShapeTool to imports
 
 class DrawCommand:
     def __init__(self, canvas_instructions):
@@ -29,6 +29,7 @@ class PaintWidget(Widget):
         self.redo_stack = deque(maxlen=50)
         self.points = []
         self.current_instructions = None
+        self.current_tool = None  # Add this to maintain tool reference
 
     def set_color(self, color):
         self.current_color = color
@@ -37,27 +38,71 @@ class PaintWidget(Widget):
         self.line_width = width
 
     def set_tool(self, tool):
+        # Confirm any active shape before switching tools
+        self.confirm_current_shape()
         self.tool_manager.set_tool(tool)
 
+    def confirm_current_shape(self):
+        """Confirm the current shape and clean up"""
+        if isinstance(self.current_tool, ShapeTool) and self.current_tool.shape:
+            # Save the current shape to undo stack
+            command = DrawCommand([self.current_tool.shape])
+            self.undo_stack.append(command)
+            self.redo_stack.clear()
+            # Clean up
+            self.current_tool.active = False
+            self.current_tool.canvas.remove(self.current_tool.handles)
+            self.current_tool = None
+
     def on_touch_down(self, touch):
+        # If clicking in the toolbar area, confirm any active shape
+        if touch.y > self.height - 56:  # Toolbar height is 56dp
+            self.confirm_current_shape()
+            return False
+
         if self.collide_point(*touch.pos):
-            tool = self.tool_manager.create_tool(self.canvas, self.current_color, self.line_width)
-            touch.ud['tool'] = tool
-            instructions = tool.on_touch_down(touch.x, touch.y)
+            # First check if we have an active shape tool that's being edited
+            if isinstance(self.current_tool, ShapeTool) and self.current_tool.shape:
+                # Click outside shape area finalizes it
+                if not self.current_tool.contains_point(touch.x, touch.y):
+                    if self.current_tool.shape:
+                        command = DrawCommand([self.current_tool.shape])
+                        self.undo_stack.append(command)
+                        self.redo_stack.clear()
+                    self.current_tool = None
+                    return True
+                # Click inside continues editing
+                instructions = self.current_tool.on_touch_down(touch.x, touch.y)
+                self.current_instructions = instructions
+                return True
+
+            # Create new tool instance if no active tool
+            self.current_tool = self.tool_manager.create_tool(self.canvas, self.current_color, self.line_width)
+            touch.ud['tool'] = self.current_tool
+            instructions = self.current_tool.on_touch_down(touch.x, touch.y)
             self.current_instructions = instructions
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos) and 'tool' in touch.ud:
-            touch.ud['tool'].on_touch_move(touch.x, touch.y)
+        if self.collide_point(*touch.pos):
+            if 'tool' in touch.ud:
+                touch.ud['tool'].on_touch_move(touch.x, touch.y)
+            elif isinstance(self.current_tool, ShapeTool):
+                self.current_tool.on_touch_move(touch.x, touch.y)
 
     def on_touch_up(self, touch):
-        if 'tool' in touch.ud:
-            touch.ud['tool'].on_touch_up(touch.x, touch.y)
-            if self.current_instructions:
-                command = DrawCommand(self.current_instructions)
+        tool = touch.ud.get('tool') or self.current_tool
+        if tool:
+            final_instructions = tool.on_touch_up(touch.x, touch.y)
+            if final_instructions:
+                command = DrawCommand(final_instructions)
                 self.undo_stack.append(command)
-                self.redo_stack.clear()  # Clear redo stack when new action is performed
-                self.current_instructions = None
+                self.redo_stack.clear()
+                # Keep reference for shape tools that can be moved
+                if isinstance(tool, ShapeTool):
+                    self.current_tool = tool
+                else:
+                    self.current_tool = None
+            self.current_instructions = None
 
     def smooth_points(self, points):
         # If we have few points, return them as is
@@ -86,12 +131,16 @@ class PaintWidget(Widget):
         return smooth_points
 
     def undo(self):
+        # Confirm any active shape before undoing
+        self.confirm_current_shape()
         if self.undo_stack:
             command = self.undo_stack.pop()
             command.undo(self.canvas)
             self.redo_stack.append(command)
 
     def redo(self):
+        # Confirm any active shape before redoing
+        self.confirm_current_shape()
         if self.redo_stack:
             command = self.redo_stack.pop()
             command.redo(self.canvas)

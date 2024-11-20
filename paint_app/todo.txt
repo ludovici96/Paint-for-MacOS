@@ -21,9 +21,9 @@ PAINT APP TODO LIST
      ✓ Pencil (free drawing)
      ✓ Brush (with different styles)
      ✓ Eraser
-     * Line tool
-     * Rectangle tool
-     * Circle tool
+     ✓ Line tool
+     ✓ Rectangle tool
+     ✓ Circle tool
      * Fill tool (paint bucket)
    ✓ Add color palette widget
    ✓ Add custom color picker
@@ -80,7 +80,7 @@ Note: ✓ = Completed
       - = To Do
 
 NEXT STEPS:
-1. Implement line tool
-2. Add shape tools (rectangle, circle)
-3. Add tool icons
-4. Add status bar
+1. Add Fill tool (paint bucket)
+2. Add tool icons
+3. Add status bar
+4. Implement file operations

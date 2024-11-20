@@ -2,44 +2,71 @@ BoxLayout:
     orientation: 'vertical'
     canvas.before:
         Color:
-            rgba: 0.15, 0.15, 0.15, 1  # Dark background
+            rgba: 0.12, 0.12, 0.12, 1  # Darker background
         Rectangle:
             pos: self.pos
             size: self.size
     
-    # Toolbar with brush size only
+    # Modern Toolbar
     BoxLayout:
         id: toolbar
         size_hint_y: None
-        height: '56dp'
-        spacing: '8dp'
-        padding: '8dp'
+        height: '48dp'  # Reduced from 64dp to 48dp
+        spacing: '10dp'  # Slightly reduced from 12dp
+        padding: '12dp'  # Reduced from 16dp
         canvas.before:
+            # Main toolbar background
             Color:
-                rgba: 0.1, 0.1, 0.1, 1  # Darker toolbar
+                rgba: 0.16, 0.16, 0.16, 1  # Slightly lighter than background
             Rectangle:
                 pos: self.pos
                 size: self.size
+            
+            # Bottom shadow effect
+            Color:
+                rgba: 0.1, 0.1, 0.1, 0.5
+            Rectangle:
+                pos: self.x, self.y
+                size: self.width, 1
+            
+            # Subtle gradient overlay
+            Color:
+                rgba: 1, 1, 1, 0.03
+            Rectangle:
+                pos: self.x, self.y + self.height/2
+                size: self.width, self.height/2
 
-        # Brush Size Group
+        # Brush Size Group with modern styling
         BoxLayout:
             orientation: 'horizontal'
-            spacing: '4dp'
+            spacing: '6dp'  # Reduced from 8dp
             size_hint_x: None
-            width: '300dp'
+            width: '300dp'  # Reduced from 320dp
+            padding: '6dp'  # Reduced from 8dp
             canvas.before:
+                # Main background
                 Color:
-                    rgba: 0.2, 0.2, 0.2, 1  # Dark group background
+                    rgba: 0.2, 0.2, 0.2, 1
                 RoundedRectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [4,]
+                    radius: [6,]  # Increased radius
+                
+                # Subtle highlight
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
             
             Label:
-                text: 'Brush Size:'
+                text: 'Brush Size'
                 size_hint_x: None
-                width: '80dp'
-                color: 0.9, 0.9, 0.9, 1  # Light gray text
+                width: '80dp'  # Reduced from 90dp
+                color: 0.95, 0.95, 0.95, 1  # Brighter text
+                font_size: '13sp'  # Reduced from 15sp
+                bold: True
             
             Slider:
                 id: brush_size
@@ -47,8 +74,15 @@ BoxLayout:
                 max: 20
                 value: 2
                 size_hint_x: None
-                width: '200dp'
+                width: '190dp'  # Reduced from 200dp
+                cursor_size: ('14dp', '14dp')  # Reduced from 16dp
+                background_width: '3dp'  # Reduced from 4dp
                 on_value: paint_widget.set_line_width(self.value)
+                # Modern slider colors
+                value_track: True
+                value_track_color: 0.4, 0.4, 0.4, 1
+                value_track_width: '3dp'  # Reduced from 4dp
+                background_color: 0.25, 0.25, 0.25, 1
     
     # Canvas
     PaintWidget:

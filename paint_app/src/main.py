@@ -69,6 +69,9 @@ class MenuBar(BoxLayout):
             ('Pencil', lambda x: self.app.select_tool('PENCIL')),
             ('Brush', lambda x: self.app.select_tool('BRUSH')),
             ('Eraser', lambda x: self.app.select_tool('ERASER')),
+            ('Line', lambda x: self.app.select_tool('LINE')),
+            ('Rectangle', lambda x: self.app.select_tool('RECTANGLE')),
+            ('Circle', lambda x: self.app.select_tool('CIRCLE')),
         ]
         self.create_dropdown_items(tools_dropdown, tools_items)
         tools_button.bind(on_release=tools_dropdown.open)

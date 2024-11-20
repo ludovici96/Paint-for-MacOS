@@ -5,12 +5,16 @@ A Microsoft Paint-like application built with Python and Kivy, specifically desi
 ## Features
 
 - Free-hand drawing with adjustable brush sizes and smoothing
-- Multiple tools (Pencil, Brush with different styles, Eraser)
+- Multiple tools:
+  * Pencil and Brush with different styles
+  * Eraser
+  * Line, Rectangle, and Circle tools with resize/move capability
+  * Shape tools with handles for easy manipulation
 - Different brush styles (Round, Square)
 - Color selection with custom color picker
 - Undo/Redo functionality with Command+Z/Command+Shift+Z support
 - Modern dark-themed MacOS-style interface
-- Tool grouping and organized toolbar
+- Dropdown menu system
 - Clear canvas functionality
 
 ## Requirements
