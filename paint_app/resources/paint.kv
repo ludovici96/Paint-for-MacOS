@@ -8,6 +8,18 @@ BoxLayout:
         padding: '5dp'
         
         Button:
+            text: 'Undo'
+            size_hint_x: None
+            width: '60dp'
+            on_release: paint_widget.undo()
+        
+        Button:
+            text: 'Redo'
+            size_hint_x: None
+            width: '60dp'
+            on_release: paint_widget.redo()
+        
+        Button:
             text: 'Clear'
             size_hint_x: None
             width: '60dp'

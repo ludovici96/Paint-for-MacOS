@@ -12,8 +12,8 @@ PAINT APP TODO LIST
    ✓ Implement basic drawing canvas
    ✓ Add brush color selection
    ✓ Add brush size slider
-   - Implement proper line drawing with smooth curves
-   - Add undo/redo functionality
+   ✓ Implement proper line drawing with smooth curves
+   ✓ Add undo/redo functionality
 
 3. Drawing Tools
    - Implement tool selection system
