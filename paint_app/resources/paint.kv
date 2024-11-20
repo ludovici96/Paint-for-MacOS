@@ -1,0 +1,12 @@
+BoxLayout:
+    orientation: 'vertical'
+    
+    BoxLayout:
+        size_hint_y: None
+        height: '48dp'
+        Button:
+            text: 'Clear'
+            on_release: paint_widget.canvas.clear()
+    
+    PaintWidget:
+        id: paint_widget
