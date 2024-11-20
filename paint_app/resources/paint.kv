@@ -1,52 +1,61 @@
 BoxLayout:
     orientation: 'vertical'
+    canvas.before:
+        Color:
+            rgba: 0.15, 0.15, 0.15, 1  # Dark background
+        Rectangle:
+            pos: self.pos
+            size: self.size
     
+    # Toolbar with brush size only
     BoxLayout:
+        id: toolbar
         size_hint_y: None
-        height: '48dp'
-        spacing: '10dp'
-        padding: '5dp'
-        
-        Button:
-            text: 'Undo'
-            size_hint_x: None
-            width: '60dp'
-            on_release: paint_widget.undo()
-        
-        Button:
-            text: 'Redo'
-            size_hint_x: None
-            width: '60dp'
-            on_release: paint_widget.redo()
-        
-        Button:
-            text: 'Clear'
-            size_hint_x: None
-            width: '60dp'
-            on_release: paint_widget.canvas.clear()
-        
-        Button:
-            text: 'Color'
-            size_hint_x: None
-            width: '60dp'
-            on_release: app.show_color_picker()
-        
+        height: '56dp'
+        spacing: '8dp'
+        padding: '8dp'
+        canvas.before:
+            Color:
+                rgba: 0.1, 0.1, 0.1, 1  # Darker toolbar
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Brush Size Group
         BoxLayout:
             orientation: 'horizontal'
+            spacing: '4dp'
             size_hint_x: None
             width: '300dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1  # Dark group background
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [4,]
             
             Label:
                 text: 'Brush Size:'
                 size_hint_x: None
                 width: '80dp'
+                color: 0.9, 0.9, 0.9, 1  # Light gray text
             
             Slider:
                 id: brush_size
                 min: 1
                 max: 20
                 value: 2
+                size_hint_x: None
+                width: '200dp'
                 on_value: paint_widget.set_line_width(self.value)
     
+    # Canvas
     PaintWidget:
         id: paint_widget
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # White background
+            Rectangle:
+                pos: self.pos
+                size: self.size

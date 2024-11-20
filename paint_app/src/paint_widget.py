@@ -1,8 +1,9 @@
 from kivy.uix.widget import Widget
 from kivy.graphics import Color, Line, Bezier
-from kivy.properties import ColorProperty, NumericProperty
+from kivy.properties import ColorProperty, NumericProperty, ObjectProperty
 from collections import deque
 from kivy.core.window import Window
+from tools import ToolManager, Tool, BrushStyle
 
 class DrawCommand:
     def __init__(self, canvas_instructions):
@@ -17,11 +18,13 @@ class DrawCommand:
             canvas.add(instr)
 
 class PaintWidget(Widget):
-    current_color = ColorProperty([1, 1, 1, 1])  # Changed from [0, 0, 0, 1] to [1, 1, 1, 1] for white
+    current_color = ColorProperty([0, 0, 0, 1])  # Changed from [1, 1, 1, 1] to [0, 0, 0, 1] for black
     line_width = NumericProperty(2)
+    tool_manager = ObjectProperty(None)
     
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.tool_manager = ToolManager()
         self.undo_stack = deque(maxlen=50)  # Limit stack size to prevent memory issues
         self.redo_stack = deque(maxlen=50)
         self.points = []
@@ -33,25 +36,23 @@ class PaintWidget(Widget):
     def set_line_width(self, width):
         self.line_width = width
 
+    def set_tool(self, tool):
+        self.tool_manager.set_tool(tool)
+
     def on_touch_down(self, touch):
         if self.collide_point(*touch.pos):
-            self.points = [touch.x, touch.y]
-            with self.canvas:
-                Color(*self.current_color)
-                touch.ud['current_color'] = Color(*self.current_color)
-                touch.ud['line'] = Line(points=self.points, width=self.line_width)
-            self.current_instructions = [touch.ud['current_color'], touch.ud['line']]
+            tool = self.tool_manager.create_tool(self.canvas, self.current_color, self.line_width)
+            touch.ud['tool'] = tool
+            instructions = tool.on_touch_down(touch.x, touch.y)
+            self.current_instructions = instructions
 
     def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos) and 'line' in touch.ud:
-            self.points.extend([touch.x, touch.y])
-            # Apply smoothing when we have enough points
-            if len(self.points) > 4:
-                # Create smooth curve using the last 4 points
-                touch.ud['line'].points = self.smooth_points(self.points)
+        if self.collide_point(*touch.pos) and 'tool' in touch.ud:
+            touch.ud['tool'].on_touch_move(touch.x, touch.y)
 
     def on_touch_up(self, touch):
-        if 'line' in touch.ud:
+        if 'tool' in touch.ud:
+            touch.ud['tool'].on_touch_up(touch.x, touch.y)
             if self.current_instructions:
                 command = DrawCommand(self.current_instructions)
                 self.undo_stack.append(command)
