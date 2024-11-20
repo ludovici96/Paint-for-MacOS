@@ -4,9 +4,37 @@ BoxLayout:
     BoxLayout:
         size_hint_y: None
         height: '48dp'
+        spacing: '10dp'
+        padding: '5dp'
+        
         Button:
             text: 'Clear'
+            size_hint_x: None
+            width: '60dp'
             on_release: paint_widget.canvas.clear()
+        
+        Button:
+            text: 'Color'
+            size_hint_x: None
+            width: '60dp'
+            on_release: app.show_color_picker()
+        
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint_x: None
+            width: '300dp'
+            
+            Label:
+                text: 'Brush Size:'
+                size_hint_x: None
+                width: '80dp'
+            
+            Slider:
+                id: brush_size
+                min: 1
+                max: 20
+                value: 2
+                on_value: paint_widget.set_line_width(self.value)
     
     PaintWidget:
         id: paint_widget

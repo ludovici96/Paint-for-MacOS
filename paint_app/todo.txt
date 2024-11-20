@@ -10,8 +10,8 @@ PAINT APP TODO LIST
 2. Basic Drawing Implementation
    ✓ Create basic window
    ✓ Implement basic drawing canvas
-   - Add brush color selection
-   - Add brush size slider
+   ✓ Add brush color selection
+   ✓ Add brush size slider
    - Implement proper line drawing with smooth curves
    - Add undo/redo functionality
 
