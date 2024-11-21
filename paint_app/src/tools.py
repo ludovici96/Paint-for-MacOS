@@ -40,40 +40,45 @@ class PencilTool(AbstractTool):
         with self.canvas:
             Color(*self.color)
             self.line = Line(points=[x, y], width=self.line_width)
-        return [self.line]
+        self.instructions = [self.line]  # Store instructions
+        return None  # Don't return instructions yet
 
     def on_touch_move(self, x, y):
         self.line.points += [x, y]
 
     def on_touch_up(self, x, y):
-        pass
+        return self.instructions  # Return instructions for undo/redo
 
 class BrushTool(AbstractTool):
     def __init__(self, canvas, color, line_width, style=BrushStyle.ROUND):
         super().__init__(canvas, color, line_width)
         self.style = style
-        self.stroke_points = []
+        self.instructions = []  # Initialize instructions list
 
     def on_touch_down(self, x, y):
-        self.stroke_points = []
-        self._add_brush_point(x, y)
-        return self.stroke_points
-
-    def on_touch_move(self, x, y):
-        self._add_brush_point(x, y)
-
-    def on_touch_up(self, x, y):
-        pass
-
-    def _add_brush_point(self, x, y):
+        self.instructions = []  # Reset instructions for new stroke
         with self.canvas:
             Color(*self.color)
-            size = self.line_width * 2
+            self._add_brush_point(x, y)
+        return None  # Don't return instructions yet
+
+    def on_touch_move(self, x, y):
+        with self.canvas:
+            Color(*self.color)
+            self._add_brush_point(x, y)
+
+    def on_touch_up(self, x, y):
+        return self.instructions  # Return all instructions for undo/redo
+
+    def _add_brush_point(self, x, y):
+        size = self.line_width * 2
+        with self.canvas:
+            Color(*self.color)
             if self.style == BrushStyle.ROUND:
                 point = Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
             else:  # SQUARE
                 point = Rectangle(pos=(x - size/2, y - size/2), size=(size, size))
-            self.stroke_points.append(point)
+            self.instructions.append(point)
 
 class EraserTool(AbstractTool):
     def on_touch_down(self, x, y):

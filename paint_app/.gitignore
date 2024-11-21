@@ -50,3 +50,6 @@ Icon
 .coverage
 htmlcov/
 .pytest_cache/
+
+# text related
+bucketfill.txt

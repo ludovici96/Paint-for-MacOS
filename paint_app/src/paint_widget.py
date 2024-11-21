@@ -45,19 +45,25 @@ class PaintWidget(Widget):
     def confirm_current_shape(self):
         """Confirm the current shape and clean up"""
         if isinstance(self.current_tool, ShapeTool) and self.current_tool.shape:
-            # Save the current shape to undo stack
-            command = DrawCommand([self.current_tool.shape])
-            self.undo_stack.append(command)
-            self.redo_stack.clear()
-            # Clean up
-            self.current_tool.active = False
-            self.current_tool.canvas.remove(self.current_tool.handles)
-            self.current_tool = None
+            try:
+                # Save the current shape to undo stack
+                command = DrawCommand([self.current_tool.shape])
+                self.undo_stack.append(command)
+                self.redo_stack.clear()
+                # Clean up
+                self.current_tool.active = False
+                if self.current_tool.handles in self.canvas.children:
+                    self.canvas.remove(self.current_tool.handles)
+                self.current_tool = None
+            except Exception as e:
+                print(f"Error confirming shape: {e}")
+                # Ensure cleanup even if there's an error
+                self.current_tool = None
 
     def on_touch_down(self, touch):
-        # If clicking in the toolbar area, confirm any active shape
-        if touch.y > self.height - 56:  # Toolbar height is 56dp
-            self.confirm_current_shape()
+        # If clicking in the toolbar area, confirm any active shape first
+        if touch.y > self.height - 48:  # Menu bar + toolbar height
+            self.confirm_current_shape()  # Always confirm shape when clicking menu
             return False
 
         if self.collide_point(*touch.pos):
@@ -65,11 +71,7 @@ class PaintWidget(Widget):
             if isinstance(self.current_tool, ShapeTool) and self.current_tool.shape:
                 # Click outside shape area finalizes it
                 if not self.current_tool.contains_point(touch.x, touch.y):
-                    if self.current_tool.shape:
-                        command = DrawCommand([self.current_tool.shape])
-                        self.undo_stack.append(command)
-                        self.redo_stack.clear()
-                    self.current_tool = None
+                    self.confirm_current_shape()
                     return True
                 # Click inside continues editing
                 instructions = self.current_tool.on_touch_down(touch.x, touch.y)
@@ -81,8 +83,15 @@ class PaintWidget(Widget):
             touch.ud['tool'] = self.current_tool
             instructions = self.current_tool.on_touch_down(touch.x, touch.y)
             self.current_instructions = instructions
+        else:
+            # If clicking outside the widget entirely, confirm any active shape
+            self.confirm_current_shape()
 
     def on_touch_move(self, touch):
+        # Prevent drawing in the toolbar area
+        if touch.y > self.height - 48:  # Menu bar + toolbar height
+            return False
+
         if self.collide_point(*touch.pos):
             if 'tool' in touch.ud:
                 touch.ud['tool'].on_touch_move(touch.x, touch.y)

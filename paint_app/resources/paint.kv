@@ -1,40 +1,31 @@
+#:import Window kivy.core.window.Window
+
 BoxLayout:
     orientation: 'vertical'
     canvas.before:
         Color:
-            rgba: 0.12, 0.12, 0.12, 1  # Darker background
+            rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.12, 0.12, 0.12, 1
         Rectangle:
             pos: self.pos
             size: self.size
     
-    # Modern Toolbar
     BoxLayout:
         id: toolbar
         size_hint_y: None
-        height: '48dp'  # Reduced from 64dp to 48dp
-        spacing: '10dp'  # Slightly reduced from 12dp
-        padding: '12dp'  # Reduced from 16dp
+        height: '22dp'  # macOS standard menu height
+        spacing: '0dp'
+        padding: '0dp'
         canvas.before:
-            # Main toolbar background
             Color:
-                rgba: 0.16, 0.16, 0.16, 1  # Slightly lighter than background
+                rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
             Rectangle:
                 pos: self.pos
                 size: self.size
-            
-            # Bottom shadow effect
             Color:
-                rgba: 0.1, 0.1, 0.1, 0.5
+                rgba: 0.8, 0.8, 0.8, 1 if not Window.is_dark_theme else 0.3, 0.3, 0.3, 1
             Rectangle:
                 pos: self.x, self.y
                 size: self.width, 1
-            
-            # Subtle gradient overlay
-            Color:
-                rgba: 1, 1, 1, 0.03
-            Rectangle:
-                pos: self.x, self.y + self.height/2
-                size: self.width, self.height/2
 
         # Brush Size Group with modern styling
         BoxLayout:
