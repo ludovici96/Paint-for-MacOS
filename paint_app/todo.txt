@@ -86,9 +86,3 @@ NEXT STEPS:
 2. Add tool icons
 3. Add status bar
 4. Implement file operations
-
-
-
-Please read the "bucketfill.txt" file, in this session we are gonna implement the "fill tool" function, i have already implemented the tool into the menu bar, but it does not have any functionality yet, i want you to help me with this. lets do this in small steps, so that we can achieve this goal.
-
-do this first: Add the FillTool class and necessary imports to the "tools.py" file and then find the "create_tool" method in the "ToolManager" class and add the Fill tool case.
