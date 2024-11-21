@@ -86,3 +86,5 @@ NEXT STEPS:
 2. Add tool icons
 3. Add status bar
 4. Implement file operations
+
+

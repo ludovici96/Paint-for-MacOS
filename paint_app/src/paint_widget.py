@@ -3,7 +3,8 @@ from kivy.graphics import Color, Line, Bezier
 from kivy.properties import ColorProperty, NumericProperty, ObjectProperty
 from collections import deque
 from kivy.core.window import Window
-from tools import ToolManager, Tool, BrushStyle, ShapeTool  # Add ShapeTool to imports
+from tools import ToolManager, Tool, BrushStyle, ShapeTool
+from modules.bucketfill import FillTool  # Add this import
 
 class DrawCommand:
     def __init__(self, canvas_instructions):
@@ -27,7 +28,7 @@ class PaintWidget(Widget):
         self.tool_manager = ToolManager()
         self.undo_stack = deque(maxlen=50)  # Limit stack size to prevent memory issues
         self.redo_stack = deque(maxlen=50)
-        self.points = []
+        self.points = []  # Initialize points list
         self.current_instructions = None
         self.current_tool = None  # Add this to maintain tool reference
 
@@ -40,6 +41,9 @@ class PaintWidget(Widget):
     def set_tool(self, tool):
         # Confirm any active shape before switching tools
         self.confirm_current_shape()
+        # Deactivate the current tool if it has a deactivate method
+        if self.current_tool and hasattr(self.current_tool, 'deactivate'):
+            self.current_tool.deactivate()
         self.tool_manager.set_tool(tool)
 
     def confirm_current_shape(self):
@@ -79,8 +83,19 @@ class PaintWidget(Widget):
                 return True
 
             # Create new tool instance if no active tool
-            self.current_tool = self.tool_manager.create_tool(self.canvas, self.current_color, self.line_width)
+            self.current_tool = self.tool_manager.create_tool(
+                self.canvas, 
+                self.current_color, 
+                self.line_width,
+                canvas_widget=self  # Pass the PaintWidget instance
+            )
+            
+            # Activate the tool if it's FillTool
+            if isinstance(self.current_tool, FillTool):
+                self.current_tool.activate()
+
             touch.ud['tool'] = self.current_tool
+            self.points = [touch.x, touch.y]  # Initialize points on touch down
             instructions = self.current_tool.on_touch_down(touch.x, touch.y)
             self.current_instructions = instructions
         else:
@@ -95,6 +110,7 @@ class PaintWidget(Widget):
         if self.collide_point(*touch.pos):
             if 'tool' in touch.ud:
                 touch.ud['tool'].on_touch_move(touch.x, touch.y)
+                self.points.extend([touch.x, touch.y])  # Collect points during touch move
             elif isinstance(self.current_tool, ShapeTool):
                 self.current_tool.on_touch_move(touch.x, touch.y)
 
@@ -112,20 +128,18 @@ class PaintWidget(Widget):
                 else:
                     self.current_tool = None
             self.current_instructions = None
-
-    def smooth_points(self, points):
-        # If we have few points, return them as is
-        if len(points) < 4:
-            return points
+        
+        if len(self.points) < 4:
+            return self.points
         
         smooth_points = []
-        smooth_points.extend(points[:2])  # Add first point
+        smooth_points.extend(self.points[:2])  # Add first point
         
         # Create smooth curve through points
-        for i in range(2, len(points) - 2, 2):
-            x0, y0 = points[i - 2], points[i - 1]  # Previous point
-            x1, y1 = points[i], points[i + 1]      # Current point
-            x2, y2 = points[i + 2], points[i + 3]  # Next point
+        for i in range(2, len(self.points) - 2, 2):
+            x0, y0 = self.points[i - 2], self.points[i - 1]  # Previous point
+            x1, y1 = self.points[i], self.points[i + 1]      # Current point
+            x2, y2 = self.points[i + 2], self.points[i + 3]  # Next point
             
             # Calculate control points for Bézier curve
             cp1x = x0 + (x1 - x0) * 0.5
@@ -136,7 +150,8 @@ class PaintWidget(Widget):
             # Add points for smooth curve
             smooth_points.extend([cp1x, cp1y, x1, y1, cp2x, cp2y])
         
-        smooth_points.extend(points[-2:])  # Add last point
+        smooth_points.extend(self.points[-2:])  # Add last point
+        self.points = []  # Clear points after processing
         return smooth_points
 
     def undo(self):
@@ -152,5 +167,8 @@ class PaintWidget(Widget):
         self.confirm_current_shape()
         if self.redo_stack:
             command = self.redo_stack.pop()
+            command.redo(self.canvas)
+            self.undo_stack.append(command)
+
             command.redo(self.canvas)
             self.undo_stack.append(command)
