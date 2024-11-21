@@ -1,97 +1,12 @@
-from enum import Enum, auto
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from kivy.graphics import Color, Line, Ellipse, Rectangle, InstructionGroup
+from modules.abstract_tool import Tool, BrushStyle, AbstractTool
+from modules.bucketfill import FillTool
+from modules.brushtool import BrushTool
+from modules.penciltool import PencilTool
+from modules.erasertool import EraserTool  # Add this import
 
-class Tool(Enum):
-    PENCIL = auto()
-    BRUSH = auto()
-    ERASER = auto()
-    LINE = auto()
-    RECTANGLE = auto()
-    CIRCLE = auto()
-    FILL = auto()
-
-class BrushStyle(Enum):
-    ROUND = auto()
-    SQUARE = auto()
-
-class AbstractTool(ABC):
-    def __init__(self, canvas, color, line_width):
-        self.canvas = canvas
-        self.color = color
-        self.line_width = line_width
-        self.last_x = None
-        self.last_y = None
-
-    @abstractmethod
-    def on_touch_down(self, x, y):
-        pass
-
-    @abstractmethod
-    def on_touch_move(self, x, y):
-        pass
-
-    @abstractmethod
-    def on_touch_up(self, x, y):
-        pass
-
-class PencilTool(AbstractTool):
-    def on_touch_down(self, x, y):
-        with self.canvas:
-            Color(*self.color)
-            self.line = Line(points=[x, y], width=self.line_width)
-        self.instructions = [self.line]  # Store instructions
-        return None  # Don't return instructions yet
-
-    def on_touch_move(self, x, y):
-        self.line.points += [x, y]
-
-    def on_touch_up(self, x, y):
-        return self.instructions  # Return instructions for undo/redo
-
-class BrushTool(AbstractTool):
-    def __init__(self, canvas, color, line_width, style=BrushStyle.ROUND):
-        super().__init__(canvas, color, line_width)
-        self.style = style
-        self.instructions = []  # Initialize instructions list
-
-    def on_touch_down(self, x, y):
-        self.instructions = []  # Reset instructions for new stroke
-        with self.canvas:
-            Color(*self.color)
-            self._add_brush_point(x, y)
-        return None  # Don't return instructions yet
-
-    def on_touch_move(self, x, y):
-        with self.canvas:
-            Color(*self.color)
-            self._add_brush_point(x, y)
-
-    def on_touch_up(self, x, y):
-        return self.instructions  # Return all instructions for undo/redo
-
-    def _add_brush_point(self, x, y):
-        size = self.line_width * 2
-        with self.canvas:
-            Color(*self.color)
-            if self.style == BrushStyle.ROUND:
-                point = Ellipse(pos=(x - size/2, y - size/2), size=(size, size))
-            else:  # SQUARE
-                point = Rectangle(pos=(x - size/2, y - size/2), size=(size, size))
-            self.instructions.append(point)
-
-class EraserTool(AbstractTool):
-    def on_touch_down(self, x, y):
-        with self.canvas:
-            Color(1, 1, 1, 1)  # White
-            self.line = Line(points=[x, y], width=self.line_width * 2)
-        return [self.line]
-
-    def on_touch_move(self, x, y):
-        self.line.points += [x, y]
-
-    def on_touch_up(self, x, y):
-        pass
+# Remove EraserTool class from here since it's now in erasertool.py
 
 class ShapeTool(AbstractTool):
     """Base class for moveable and resizable shapes"""
@@ -635,6 +550,8 @@ class ToolManager:
             return RectangleTool(canvas, color, line_width)
         elif self.current_tool == Tool.CIRCLE:
             return CircleTool(canvas, color, line_width)
+        elif self.current_tool == Tool.FILL:  # Add this case
+            return FillTool(canvas, color, line_width)
         else:
             raise ValueError("Tool not implemented")
 
