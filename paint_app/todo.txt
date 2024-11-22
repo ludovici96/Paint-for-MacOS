@@ -32,13 +32,10 @@ I am developing a "Microsoft Paint"-like application for macOS using Python and 
 
 4. UI Improvements
    ✓ Create proper toolbar layout
-   - Add tool icons
-   - Add status bar showing:
-     * Current tool
-     * Current color
-     * Canvas size
-     * Cursor position
-   - Add keyboard shortcuts
+   ✓ Add tool icons
+   ✓ Add status bar showing:
+     ✓ Current tool
+     ✓ Current color
 
 5. File Operations
    - Implement "New Canvas" functionality
@@ -47,6 +44,7 @@ I am developing a "Microsoft Paint"-like application for macOS using Python and 
      * Support JPEG format
    - Add "Open Image" functionality
    - Add "Export" functionality
+   - Add keyboard shortcuts
 
 6. Advanced Features
    - Add layers support
@@ -83,9 +81,10 @@ Note: ✓ = Completed
       / = almost done
 
 NEXT STEPS:
-1. Add Fill tool (paint bucket)
-2. Add tool icons
-3. Add status bar
-4. Implement file operations
+1. Implement "New Canvas" functionality
+2. Add "Save" functionality (PNG & JPEG support)
+3. Add "Open Image" functionality
+4. Add keyboard shortcuts
+5. Add layers support
 
 

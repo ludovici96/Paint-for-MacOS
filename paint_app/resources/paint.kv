@@ -171,6 +171,147 @@ BoxLayout:
                 background_color: 0.3, 0.3, 0.3, 1
                 on_release: app.show_color_picker()
     
+    # Quick Access Toolbar
+    BoxLayout:
+        id: quick_toolbar
+        size_hint_y: None
+        height: '32dp'
+        spacing: '4dp'
+        padding: '6dp'
+        canvas.before:
+            Color:
+                rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Tool Group with modern styling
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '280dp'
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Tools'
+                size_hint_x: None
+                width: '40dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+
+            # Tool Buttons
+            ToolButton:
+                tool: 'PENCIL'
+                icon: 'pencil'
+                tooltip: 'Pencil Tool (P)'
+                
+            ToolButton:
+                tool: 'BRUSH'
+                icon: 'brush'
+                tooltip: 'Brush Tool (B)'
+                
+            ToolButton:
+                tool: 'ERASER'
+                icon: 'eraser'
+                tooltip: 'Eraser Tool (E)'
+
+        # Shape Tools Group
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '220dp'
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Shapes'
+                size_hint_x: None
+                width: '50dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+                    
+            ToolButton:
+                tool: 'LINE'
+                icon: 'line'
+                tooltip: 'Line Tool (L)'
+                
+            ToolButton:
+                tool: 'RECTANGLE'
+                icon: 'rectangle'
+                tooltip: 'Rectangle Tool (R)'
+                
+            ToolButton:
+                tool: 'CIRCLE'
+                icon: 'circle'
+                tooltip: 'Circle Tool (C)'
+
+        # Fill Tool Group
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '100dp'
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Fill'
+                size_hint_x: None
+                width: '30dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+            
+            ToolButton:
+                tool: 'FILL'
+                icon: 'fill'
+                tooltip: 'Fill Tool (F)'
+            
+        Widget:
+            # Spacer to push everything to the left
+            size_hint_x: 1
+
     # Canvas
     PaintWidget:
         id: paint_widget
@@ -180,3 +321,19 @@ BoxLayout:
             Rectangle:
                 pos: self.pos
                 size: self.size
+
+<ToolButton@ButtonBehavior+Image>:
+    icon: ''  # Icon name property
+    source: app.get_icon_path(self.icon) if self.icon else ''
+    size_hint: None, None
+    size: '16dp', '16dp'
+    allow_stretch: False
+    keep_ratio: True
+    canvas.before:
+        Color:
+            rgba: (0.7, 0.7, 0.7, 1) if not Window.is_dark_theme else (0.4, 0.4, 0.4, 1) if self.active else (0.85, 0.85, 0.85, 1) if not Window.is_dark_theme else (0.3, 0.3, 0.3, 1) if self.state == 'normal' else (0.7, 0.7, 0.7, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [4,]
+    on_release: app.select_tool(self.tool)

@@ -1,11 +1,35 @@
+from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.dropdown import DropDown
 from kivy.core.window import Window
 from kivy.graphics import Color, Rectangle
 from font_manager import FontManager
+from kivy.properties import StringProperty, ObjectProperty, BooleanProperty
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.image import Image
+
+class ToolButton(ButtonBehavior, Image):
+    tool = StringProperty('')
+    tooltip = StringProperty('')
+    active = BooleanProperty(False)  # Changed to BooleanProperty
+    
+    def on_release(self):
+        if self.parent:
+            # Deactivate all other tool buttons
+            for child in self.parent.children:
+                if isinstance(child, ToolButton) and child != self:
+                    child.active = False
+            # Activate this button
+            self.active = True
+            # Get the app instance correctly
+            app = App.get_running_app()
+            app.select_tool(self.tool)
 
 class MenuButton(Button):
+    dropdown = ObjectProperty(None, allownone=True)
+    _current_dropdown = None  # Class variable to track active dropdown
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.background_normal = ''
@@ -17,6 +41,15 @@ class MenuButton(Button):
         self.font_name = FontManager.get_system_font()
         self.font_size = '13sp'
 
+    def on_release(self):
+        if self.dropdown:
+            # If there's already a dropdown showing, dismiss it first
+            if MenuButton._current_dropdown and MenuButton._current_dropdown != self.dropdown:
+                MenuButton._current_dropdown.dismiss()
+            if not self.dropdown.parent:
+                self.dropdown.open(self)
+                MenuButton._current_dropdown = self.dropdown
+
 class MenuBar(BoxLayout):
     def __init__(self, app_instance, **kwargs):
         super().__init__(**kwargs)
@@ -24,7 +57,27 @@ class MenuBar(BoxLayout):
         self.size_hint_y = None
         self.height = '22dp'
         self.background_color = (0.98, 0.98, 0.98, 1) if not Window.is_dark_theme else (0.2, 0.2, 0.2, 1)
+        self.active_tool = None
+        # Initialize dropdowns as None
+        self.file_dropdown = None
+        self.edit_dropdown = None
+        self.tools_dropdown = None
+        self.view_dropdown = None
+        # Bind window focus to dismiss all dropdowns
+        Window.bind(on_cursor_leave=self.dismiss_all_dropdowns,
+                   on_motion=self.check_mouse_pos)
         self.create_menus()
+
+    def check_mouse_pos(self, instance, etype, me):
+        """Dismiss dropdowns if mouse moves outside menu area"""
+        if me.pos[1] < self.y or me.pos[1] > (self.y + self.height):
+            self.dismiss_all_dropdowns()
+
+    def dismiss_all_dropdowns(self, *args):
+        """Dismiss all dropdowns"""
+        if hasattr(MenuButton, '_current_dropdown') and MenuButton._current_dropdown:
+            MenuButton._current_dropdown.dismiss()
+            MenuButton._current_dropdown = None
 
     def create_menus(self):
         self.add_file_menu()
@@ -34,7 +87,8 @@ class MenuBar(BoxLayout):
 
     def add_file_menu(self):
         file_button = MenuButton(text='File')
-        file_dropdown = self.create_styled_dropdown()
+        self.file_dropdown = self.create_styled_dropdown()
+        file_button.dropdown = self.file_dropdown
         file_items = [
             ('New', 'meta+N', lambda x: print('New - Not implemented')),
             ('Open...', 'meta+O', lambda x: print('Open - Not implemented')),
@@ -42,13 +96,14 @@ class MenuBar(BoxLayout):
             ('Save As...', 'meta+shift+S', lambda x: print('Save As - Not implemented')),
             ('Export...', 'meta+E', lambda x: print('Export - Not implemented')),
         ]
-        self.create_dropdown_items(file_dropdown, file_items)
-        file_button.bind(on_release=file_dropdown.open)
+        self.create_dropdown_items(self.file_dropdown, file_items)
+        file_button.bind(on_release=self.file_dropdown.open)
         self.add_widget(file_button)
 
     def add_edit_menu(self):
         edit_button = MenuButton(text='Edit')
-        edit_dropdown = self.create_styled_dropdown()
+        self.edit_dropdown = self.create_styled_dropdown()
+        edit_button.dropdown = self.edit_dropdown  # Store dropdown reference
         edit_items = [
             ('Undo', 'meta+Z', lambda x: self.app.root.ids.paint_widget.undo()),
             ('Redo', 'meta+shift+Z', lambda x: self.app.root.ids.paint_widget.redo()),
@@ -57,13 +112,14 @@ class MenuBar(BoxLayout):
             ('Paste', 'meta+V', lambda x: print('Paste - Not implemented')),
             ('Clear All', 'meta+delete', lambda x: self.app.root.ids.paint_widget.canvas.clear()),
         ]
-        self.create_dropdown_items(edit_dropdown, edit_items)
-        edit_button.bind(on_release=edit_dropdown.open)
+        self.create_dropdown_items(self.edit_dropdown, edit_items)
+        edit_button.bind(on_release=self.edit_dropdown.open)
         self.add_widget(edit_button)
 
     def add_tools_menu(self):
         tools_button = MenuButton(text='Tools')
-        self.tools_dropdown = self.create_styled_dropdown()  # Use styled dropdown
+        self.tools_dropdown = self.create_styled_dropdown()
+        tools_button.dropdown = self.tools_dropdown  # Store dropdown reference
 
         tool_names = ['PENCIL', 'BRUSH', 'ERASER', 'LINE', 'RECTANGLE', 'CIRCLE', 'FILL']
         for tool_name in tool_names:
@@ -77,11 +133,19 @@ class MenuBar(BoxLayout):
                 font_name=FontManager.get_system_font(),
                 font_size='13sp'
             )
-            # Bind the correct tool_name using a default argument in the lambda
-            btn.bind(
-                on_release=lambda btn, tool=tool_name: self.app.select_tool(tool)
-            )
-            btn.bind(on_release=self.tools_dropdown.dismiss)
+            
+            def create_tool_callback(tool):
+                def callback(instance):
+                    self.app.select_tool(tool)
+                    # Update quick access toolbar button states
+                    quick_toolbar = self.app.root.ids.quick_toolbar
+                    for child in quick_toolbar.children:
+                        if isinstance(child, ToolButton):
+                            child.active = (child.tool == tool)
+                    self.tools_dropdown.dismiss()
+                return callback
+            
+            btn.bind(on_release=create_tool_callback(tool_name))
             self.tools_dropdown.add_widget(btn)
 
         tools_button.bind(on_release=self.tools_dropdown.open)
@@ -89,7 +153,8 @@ class MenuBar(BoxLayout):
 
     def add_view_menu(self):
         view_button = MenuButton(text='View')
-        view_dropdown = self.create_styled_dropdown()
+        self.view_dropdown = self.create_styled_dropdown()
+        view_button.dropdown = self.view_dropdown  # Store dropdown reference
         view_items = [
             ('Show Grid', 'meta+G', lambda x: print('Show Grid - Not implemented')),
             ('Zoom In', 'meta+plus', lambda x: print('Zoom In - Not implemented')),
@@ -97,10 +162,10 @@ class MenuBar(BoxLayout):
             ('Actual Size', 'meta+0', lambda x: print('Actual Size - Not implemented')),
             ('Color Picker', 'meta+K', self.app.show_color_picker),
         ]
-        self.create_dropdown_items(view_dropdown, view_items)
+        self.create_dropdown_items(self.view_dropdown, view_items)
         brush_style_btn = self.create_brush_style_button()
-        view_dropdown.add_widget(brush_style_btn)
-        view_button.bind(on_release=view_dropdown.open)
+        self.view_dropdown.add_widget(brush_style_btn)
+        view_button.bind(on_release=self.view_dropdown.open)
         self.add_widget(view_button)
 
     # ... keeping all the helper methods from the original MenuBar class ...

@@ -72,8 +72,8 @@ class PaintWidget(Widget):
                 self.current_tool = None
 
     def on_touch_down(self, touch):
-        # If clicking in the toolbar area, confirm any active shape first
-        if touch.y > self.height - 48:  # Menu bar + toolbar height
+        # If clicking in the menu bar area, confirm any active shape first
+        if touch.y > self.height - 0:  # Only menu bar height
             self.confirm_current_shape()  # Always confirm shape when clicking menu
             return False
 
@@ -110,8 +110,8 @@ class PaintWidget(Widget):
             self.confirm_current_shape()
 
     def on_touch_move(self, touch):
-        # Prevent drawing in the toolbar area
-        if touch.y > self.height - 48:  # Menu bar + toolbar height
+        # Prevent drawing in the menu bar area only
+        if touch.y > self.height - 0:  # Only menu bar height
             return False
 
         if self.collide_point(*touch.pos):

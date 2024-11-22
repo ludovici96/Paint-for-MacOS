@@ -16,6 +16,7 @@ from kivy.graphics import Color, Rectangle
 from theme_manager import ThemeManager
 from font_manager import FontManager
 from toolbar import MenuBar  # Only import MenuBar from toolbar.py
+from icon_manager import IconManager
 
 # Initialize font before creating any widgets
 FontManager.initialize()
@@ -31,6 +32,7 @@ class PaintApp(App):
         ThemeManager.initialize()
         FontManager.initialize()  # Initialize font manager
         self.theme_is_dark = Window.is_dark_theme  # Store theme state
+        self.icon_manager = IconManager.get_instance()
 
     @property
     def is_dark_theme(self):
@@ -97,6 +99,13 @@ class PaintApp(App):
             
         confirm_button.bind(on_release=on_color_select)
         self.color_popup.open()
+
+    def get_icon_path(self, name):
+        return self.icon_manager.get_icon_path(name)
+        
+    def on_start(self):
+        # Ensure icons are loaded when the app starts
+        self.icon_manager = IconManager.get_instance()
 
 
 if __name__ == '__main__':
