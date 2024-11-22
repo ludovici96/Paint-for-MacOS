@@ -1,10 +1,9 @@
 from kivy.graphics import Color, Fbo, ClearColor, ClearBuffers, Rectangle
 from .abstract_tool import AbstractTool
-from queue import Queue
 import numpy as np
 from kivy.core.image import Image as CoreImage
 from kivy.graphics.texture import Texture
-import io
+import scipy.ndimage  # Make sure to import scipy.ndimage
 
 class FillTool(AbstractTool):
     name = 'bucket_fill'
@@ -97,7 +96,7 @@ class FillTool(AbstractTool):
         # Clear the redo stack
         self.redo_stack.clear()
 
-        # Perform the flood fill using scanline algorithm
+        # Perform the flood fill using optimized method
         self.flood_fill(pixel_data, x, y, target_color, fill_color, self.tolerance)
 
         # Update the texture with the modified image data
@@ -115,31 +114,23 @@ class FillTool(AbstractTool):
 
     def flood_fill(self, pixel_data, x, y, target_color, fill_color, tolerance):
         height, width, _ = pixel_data.shape
+        # Create a boolean mask where pixels match the target color within the given tolerance
         mask = np.all(np.abs(pixel_data[:, :, :3].astype(int) - target_color.astype(int)) <= tolerance, axis=2)
-        filled = np.zeros((height, width), dtype=bool)
-        stack = [(x, y)]
 
-        while stack:
-            nx, ny = stack.pop()
-            if nx < 0 or nx >= width or ny < 0 or ny >= height:
-                continue
-            if filled[ny, nx] or not mask[ny, nx]:
-                continue
+        # Use scipy.ndimage.label to label connected regions in the mask
+        structure = np.array([[0,1,0],[1,1,1],[0,1,0]], dtype=bool)  # 4-connectivity
+        labeled, num_features = scipy.ndimage.label(mask, structure=structure)
 
-            # Fill the pixel
-            pixel_data[ny, nx, :3] = fill_color
-            filled[ny, nx] = True
+        # Get the label of the region containing the starting point
+        target_label = labeled[y, x]
+        if target_label == 0:
+            return  # The starting point is not in any connected region
 
-            # Add neighboring pixels
-            stack.append((nx + 1, ny))
-            stack.append((nx - 1, ny))
-            stack.append((nx, ny + 1))
-            stack.append((nx, ny - 1))
+        # Create a mask for the region to fill
+        region_mask = (labeled == target_label)
 
-    def colors_are_similar(self, color1, color2, tolerance):
-        # Calculate the difference between the colors
-        diff = np.abs(color1.astype(int) - color2.astype(int))
-        return np.all(diff <= tolerance)
+        # Fill the region
+        pixel_data[region_mask, :3] = fill_color
 
     def undo(self):
         if self.undo_stack:
