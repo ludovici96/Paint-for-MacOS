@@ -8,13 +8,20 @@ from modules.bucketfill import FillTool  # Add this import
 
 class DrawCommand:
     def __init__(self, canvas_instructions):
-        self.instructions = canvas_instructions
+        # Store instructions as a list even if a single instruction is passed
+        self.instructions = canvas_instructions if isinstance(canvas_instructions, list) else [canvas_instructions]
 
     def undo(self, canvas):
-        for instr in self.instructions:
-            canvas.remove(instr)
+        # Remove instructions in reverse order to handle Color instructions properly
+        for instr in reversed(self.instructions):
+            try:
+                canvas.remove(instr)
+            except ValueError:
+                # Skip if instruction is already removed
+                pass
 
     def redo(self, canvas):
+        # Add instructions in original order
         for instr in self.instructions:
             canvas.add(instr)
 
@@ -167,8 +174,5 @@ class PaintWidget(Widget):
         self.confirm_current_shape()
         if self.redo_stack:
             command = self.redo_stack.pop()
-            command.redo(self.canvas)
-            self.undo_stack.append(command)
-
             command.redo(self.canvas)
             self.undo_stack.append(command)

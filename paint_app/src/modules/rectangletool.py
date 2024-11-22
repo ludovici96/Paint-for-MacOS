@@ -22,9 +22,9 @@ class RectangleTool(ShapeTool):
         self.start_x = x
         self.start_y = y
         with self.canvas:
-            Color(*self.color)
+            self.color_instruction = Color(*self.color)
             self.preview = Line(rectangle=(x, y, 0, 0), width=self.line_width)
-        return [self.preview]
+        return [self.color_instruction, self.preview]  # Return both instructions
 
     def on_touch_move(self, x, y):
         if self.is_resizing and self.shape:
@@ -49,10 +49,13 @@ class RectangleTool(ShapeTool):
             self.resize_handle = None
             return None
 
-        self.canvas.remove(self.preview)
+        if hasattr(self, 'preview') and hasattr(self, 'color_instruction'):
+            self.canvas.remove(self.preview)
+            self.canvas.remove(self.color_instruction)
+        
         with self.canvas:
-            Color(*self.color)
-            self.shape = Line(
+            color_instruction = Color(*self.color)
+            shape = Line(
                 rectangle=(
                     min(self.start_x, x),
                     min(self.start_y, y),
@@ -61,7 +64,8 @@ class RectangleTool(ShapeTool):
                 ),
                 width=self.line_width
             )
-        return [self.shape]
+            self.shape = shape
+        return [color_instruction, shape]  # Return both instructions
 
     def get_bounds(self):
         if not self.shape:
