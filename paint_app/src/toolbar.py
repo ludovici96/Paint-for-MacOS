@@ -63,18 +63,28 @@ class MenuBar(BoxLayout):
 
     def add_tools_menu(self):
         tools_button = MenuButton(text='Tools')
-        tools_dropdown = self.create_styled_dropdown()
-        tools_items = [
-            ('Pencil', lambda x: self.app.select_tool('PENCIL')),
-            ('Brush', lambda x: self.app.select_tool('BRUSH')),
-            ('Eraser', lambda x: self.app.select_tool('ERASER')),
-            ('Line', lambda x: self.app.select_tool('LINE')),
-            ('Rectangle', lambda x: self.app.select_tool('RECTANGLE')),
-            ('Circle', lambda x: self.app.select_tool('CIRCLE')),
-            ('Fill', lambda x: self.app.select_tool('FILL')),
-        ]
-        self.create_dropdown_items(tools_dropdown, tools_items)
-        tools_button.bind(on_release=tools_dropdown.open)
+        self.tools_dropdown = self.create_styled_dropdown()  # Use styled dropdown
+
+        tool_names = ['PENCIL', 'BRUSH', 'ERASER', 'LINE', 'RECTANGLE', 'CIRCLE', 'FILL']
+        for tool_name in tool_names:
+            btn = Button(
+                text=tool_name.title(),
+                size_hint_y=None,
+                height='35dp',
+                background_normal='',
+                background_color=(0.98, 0.98, 0.98, 1) if not Window.is_dark_theme else (0.25, 0.25, 0.25, 1),
+                color=(0.1, 0.1, 0.1, 1) if not Window.is_dark_theme else (0.9, 0.9, 0.9, 1),
+                font_name=FontManager.get_system_font(),
+                font_size='13sp'
+            )
+            # Bind the correct tool_name using a default argument in the lambda
+            btn.bind(
+                on_release=lambda btn, tool=tool_name: self.app.select_tool(tool)
+            )
+            btn.bind(on_release=self.tools_dropdown.dismiss)
+            self.tools_dropdown.add_widget(btn)
+
+        tools_button.bind(on_release=self.tools_dropdown.open)
         self.add_widget(tools_button)
 
     def add_view_menu(self):
