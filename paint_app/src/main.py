@@ -15,7 +15,7 @@ from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Rectangle
 from theme_manager import ThemeManager
 from font_manager import FontManager
-from toolbar import MenuBar  # Only import MenuBar from toolbar.py
+from toolbar import MenuBar, ToolButton  # Update this line to import ToolButton
 from icon_manager import IconManager
 
 # Initialize font before creating any widgets
@@ -55,6 +55,12 @@ class PaintApp(App):
         try:
             tool = Tool[tool_name]
             self.root.ids.paint_widget.set_tool(tool)
+            
+            # Deactivate all tool buttons in quick_toolbar
+            for child in self.root.ids.quick_toolbar.walk(restrict=True):
+                if isinstance(child, ToolButton):
+                    child.active = (child.tool == tool_name)
+                    
         except KeyError:
             print(f"Invalid tool: {tool_name}")
 
@@ -78,6 +84,8 @@ class PaintApp(App):
         color_picker = ColorPicker()
         content.add_widget(color_picker)
         
+        # Set initial color to current color
+        color_picker.color = self.root.ids.paint_widget.current_color
 
         confirm_button = Button(
             text='Select Color',
@@ -86,7 +94,6 @@ class PaintApp(App):
         )
         content.add_widget(confirm_button)
         
-
         self.color_popup = Popup(
             title='Choose Color',
             content=content,
