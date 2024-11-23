@@ -1,3 +1,6 @@
+# This file manages the loading and access of icon assets used throughout the application.
+# It implements a singleton pattern for efficient icon resource management.
+
 import os
 from kivy.core.image import Image as CoreImage
 

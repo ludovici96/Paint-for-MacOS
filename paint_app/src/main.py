@@ -1,3 +1,5 @@
+# This is the main application file that initializes the Paint application.
+# It sets up the window, manages global state, and coordinates between different components.
 import os
 import sys
 from kivy.app import App

@@ -1,3 +1,6 @@
+# This file handles the tool management system, including tool creation and switching
+# between different drawing tools. It acts as a factory for creating specific tool instances.
+
 from kivy.graphics import Color, Line, Rectangle
 from modules.abstract_tool import Tool, BrushStyle, AbstractTool
 from modules.shapetool import ShapeTool

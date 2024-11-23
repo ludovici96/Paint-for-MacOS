@@ -1,3 +1,5 @@
+# This file defines the base abstractions for all drawing tools and tool-related enums.
+# It provides the interface that all concrete tools must implement.
 from abc import ABC, abstractmethod
 from enum import Enum, auto
 

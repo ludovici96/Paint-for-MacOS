@@ -1,3 +1,5 @@
+# This file defines the toolbar UI components including menu buttons, dropdowns, and tool buttons.
+# It handles the menu system and tool selection interface.
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout

@@ -25,6 +25,8 @@ class DrawCommand:
         for instr in self.instructions:
             canvas.add(instr)
 
+# This is the main canvas widget where drawing occurs. It handles touch/mouse input,
+# manages the undo/redo system, and coordinates with the active drawing tools.
 class PaintWidget(Widget):
     current_color = ColorProperty([0, 0, 0, 1])  # Changed from [1, 1, 1, 1] to [0, 0, 0, 1] for black
     line_width = NumericProperty(2)

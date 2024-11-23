@@ -1,4 +1,5 @@
-
+# This file manages the application's theme system, detecting and handling system dark/light
+# mode changes for macOS integration.
 from kivy.core.window import Window
 from kivy.clock import Clock
 import platform

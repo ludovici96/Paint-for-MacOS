@@ -1,3 +1,5 @@
+# This file provides the base implementation for all shape-based tools (line, rectangle, circle).
+# It includes shared functionality for shape manipulation, resizing, and movement.
 from abc import abstractmethod
 from kivy.graphics import Color, Line, Rectangle, InstructionGroup
 from .abstract_tool import AbstractTool
