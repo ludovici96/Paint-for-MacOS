@@ -5,6 +5,10 @@ from collections import deque
 from kivy.core.window import Window
 from tools import ToolManager, Tool, BrushStyle, ShapeTool
 from modules.bucketfill import FillTool  # Add this import
+from kivy.core.image import Image as CoreImage  # Ensure CoreImage is imported
+from kivy.graphics.texture import Texture  # Add this import
+from PIL import Image  # Add this import
+import io  # Add this import
 
 class DrawCommand:
     def __init__(self, canvas_instructions):
@@ -24,6 +28,59 @@ class DrawCommand:
         # Add instructions in original order
         for instr in self.instructions:
             canvas.add(instr)
+
+class ImageLoadCommand:
+    """Command for loading images with undo/redo support"""
+    def __init__(self, widget, old_instructions, new_instructions, old_size, new_size, texture=None):
+        print(f"Creating ImageLoadCommand:")
+        print(f"- Old size: {old_size}")
+        print(f"- New size: {new_size}")
+        print(f"- Old instructions count: {len(old_instructions) if old_instructions else 0}")
+        print(f"- New instructions count: {len(new_instructions) if new_instructions else 0}")
+        
+        self.widget = widget
+        # Create deep copies of instructions
+        self.old_instructions = old_instructions[:]  # Use slice to create a copy
+        self.new_instructions = []
+        # Create new instructions with new Color and Rectangle objects
+        with widget.canvas:
+            Color(1, 1, 1, 1)
+            Rectangle(pos=widget.pos, size=new_size)
+            Color(1, 1, 1, 1)
+            Rectangle(texture=texture, pos=widget.pos, size=new_size)
+            self.new_instructions = widget.canvas.children[:]
+        
+        self.old_size = tuple(old_size)
+        self.new_size = tuple(new_size)
+        self.texture = texture
+
+    def undo(self, canvas):
+        print(f"Undoing image load:")
+        print(f"- Restoring size: {self.old_size}")
+        print(f"- Restoring {len(self.old_instructions)} instructions")
+        
+        # Clear and restore old state
+        canvas.clear()
+        self.widget.size = self.old_size
+        for instr in self.old_instructions:
+            try:
+                canvas.add(instr)
+            except Exception as e:
+                print(f"Error restoring instruction: {e}")
+
+    def redo(self, canvas):
+        print(f"Redoing image load:")
+        print(f"- Setting size: {self.new_size}")
+        print(f"- Has texture: {self.texture is not None}")
+        
+        # Clear and restore new state
+        canvas.clear()
+        self.widget.size = self.new_size
+        for instr in self.new_instructions:
+            try:
+                canvas.add(instr)
+            except Exception as e:
+                print(f"Error restoring instruction: {e}")
 
 # This is the main canvas widget where drawing occurs. It handles touch/mouse input,
 # manages the undo/redo system, and coordinates with the active drawing tools.
@@ -164,20 +221,34 @@ class PaintWidget(Widget):
         return smooth_points
 
     def undo(self):
-        # Confirm any active shape before undoing
+        print("\nExecuting undo:")
+        print(f"- Undo stack size: {len(self.undo_stack)}")
+        print(f"- Redo stack size: {len(self.redo_stack)}")
+        
         self.confirm_current_shape()
         if self.undo_stack:
             command = self.undo_stack.pop()
+            print(f"- Command type: {type(command).__name__}")
             command.undo(self.canvas)
             self.redo_stack.append(command)
+            print("Undo completed")
+        else:
+            print("No actions to undo")
 
     def redo(self):
-        # Confirm any active shape before redoing
+        print("\nExecuting redo:")
+        print(f"- Undo stack size: {len(self.undo_stack)}")
+        print(f"- Redo stack size: {len(self.redo_stack)}")
+        
         self.confirm_current_shape()
         if self.redo_stack:
             command = self.redo_stack.pop()
+            print(f"- Command type: {type(command).__name__}")
             command.redo(self.canvas)
             self.undo_stack.append(command)
+            print("Redo completed")
+        else:
+            print("No actions to redo")
 
     def has_unsaved_changes(self):
         """Check if there are any unsaved changes"""
@@ -212,3 +283,73 @@ class PaintWidget(Widget):
         # Reset to default state
         self.current_color = [0, 0, 0, 1]
         self.line_width = 2
+
+    def export_as_image(self):
+        """Capture the current canvas state as an image"""
+        # Use the parent class method to get the image
+        return super().export_as_image()
+    
+    def clear_unsaved_changes(self):
+        """Clear the unsaved changes flag after successful save"""
+        self.undo_stack.clear()
+        self.redo_stack.clear()
+
+    def load_image(self, filepath):
+        """Load an image from a file and display it on the canvas."""
+        try:
+            print(f"\nLoading image: {filepath}")
+            
+            # Store current canvas state
+            old_size = list(self.size)
+            old_instructions = self.canvas.children[:]  # Create a copy of current instructions
+            print(f"Current canvas state:")
+            print(f"- Size: {old_size}")
+            print(f"- Instructions count: {len(old_instructions)}")
+            
+            # Load and process image
+            with open(filepath, 'rb') as f:
+                data = f.read()
+            pil_image = Image.open(io.BytesIO(data)).convert('RGBA')
+            image_data = pil_image.tobytes()
+            
+            # Create texture
+            texture = Texture.create(size=pil_image.size, colorfmt='rgba', bufferfmt='ubyte')
+            texture.blit_buffer(image_data, colorfmt='rgba', bufferfmt='ubyte')
+            texture.flip_vertical()
+            
+            print(f"Image processed:")
+            print(f"- Image size: {pil_image.size}")
+            print(f"- Texture created: {texture.size}")
+            
+            # Create command before modifying canvas
+            command = ImageLoadCommand(
+                self,
+                old_instructions,
+                None,  # Will be set in ImageLoadCommand
+                old_size,
+                pil_image.size,
+                texture
+            )
+            
+            # Update canvas with new image
+            self.canvas.clear()
+            self.size = pil_image.size
+            
+            print("Adding command to undo stack")
+            print(f"- Undo stack size before: {len(self.undo_stack)}")
+            self.undo_stack.append(command)
+            self.redo_stack.clear()
+            print(f"- Undo stack size after: {len(self.undo_stack)}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error in load_image: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def clear_undo_history(self):
+        """Clear the undo and redo stacks."""
+        self.undo_stack.clear()
+        self.redo_stack.clear()

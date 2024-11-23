@@ -38,13 +38,15 @@ I am developing a "Microsoft Paint"-like application for macOS using Python and 
      ✓ Current color
 
 5. File Operations
-   - Implement "New Canvas" functionality
-   - Add "Save" functionality
-     * Support PNG format
-     * Support JPEG format
+   ✓ Implement "New Canvas" functionality
+   ✓ Add "Save" functionality
+     ✓ Support PNG format
+     ✓ Support JPEG format
    - Add "Open Image" functionality
    - Add "Export" functionality
-   - Add keyboard shortcuts
+   ✓ Add keyboard shortcuts
+   ✓ Add proper "New Canvas" dialog with unsaved changes warning
+   ✓ Add macOS-style save dialog with icons and animations
 
 6. Advanced Features
    - Add layers support
@@ -81,10 +83,8 @@ Note: ✓ = Completed
       / = almost done
 
 NEXT STEPS:
-1. Implement "New Canvas" functionality
-2. Add "Save" functionality (PNG & JPEG support)
-3. Add "Open Image" functionality
-4. Add keyboard shortcuts
-5. Add layers support
+1. Add "Open Image" functionality
+2. Add layers support
+3. Add zoom functionality
 
 

@@ -24,6 +24,15 @@ from kivy.uix.label import Label
 from kivy.properties import StringProperty, ObjectProperty, ListProperty
 from kivy.core.text import LabelBase
 from kivy.animation import Animation
+from kivy.uix.filechooser import FileChooserListView
+from file_utils import FileManager, SUPPORTED_FORMATS
+from kivy.uix.progressbar import ProgressBar
+import threading
+import os
+from kivy.clock import Clock  # Add this import at the top
+from Foundation import NSURL
+from AppKit import NSSavePanel, NSView, NSMakeRect, NSTextField, NSPopUpButton, NSColor, NSModalResponseOK
+from Foundation import NSOpenPanel  # Ensure NSOpenPanel is imported
 
 # Initialize font before creating any widgets
 FontManager.initialize()
@@ -174,7 +183,145 @@ class PaintApp(App):
             self.new_canvas()
             return True
         
+        # Command + S (save)
+        if codepoint == 's' and modifier == ['meta']:
+            self.save_canvas()
+            return True
+
+        # Command + O (open)
+        if codepoint == 'o' and modifier == ['meta']:
+            self.open_image()
+            return True
+        
         return False
+
+    def get_icon_path(self, name):
+        return self.icon_manager.get_icon_path(name)
+    
+    def save_canvas(self, callback=None, *args):
+        """Handle save operation using native macOS save dialog with format selection"""
+        try:
+            # Create save panel
+            save_panel = NSSavePanel.alloc().init()
+            save_panel.setTitle_("Save Image")
+            save_panel.setNameFieldStringValue_("Untitled")  # Remove .png extension
+            save_panel.setAllowedFileTypes_(["png", "jpg", "jpeg"])  # Allowed formats
+            save_panel.setAllowsOtherFileTypes_(False)  # Restrict to allowed types
+            save_panel.setExtensionHidden_(True)  # Show the file extension field
+
+            # Create accessory view with format selection
+            accessory_view = NSView.alloc().initWithFrame_(NSMakeRect(0, 0, 200, 50))
+
+            # Create label for the format selection
+            format_label = NSTextField.alloc().initWithFrame_(NSMakeRect(0, 15, 60, 25))
+            format_label.setStringValue_("Format:")
+            format_label.setEditable_(False)
+            format_label.setBezeled_(False)
+            format_label.setDrawsBackground_(False)
+            format_label.setBordered_(False)
+            format_label.setBackgroundColor_(NSColor.clearColor())
+
+            # Create pop-up button for format selection
+            format_pop_up = NSPopUpButton.alloc().initWithFrame_(NSMakeRect(65, 15, 120, 25))
+            format_pop_up.addItemsWithTitles_(["PNG", "JPEG"])
+            format_pop_up.selectItemWithTitle_("PNG")  # Set default selection
+
+            # Add label and pop-up button to the accessory view
+            accessory_view.addSubview_(format_label)
+            accessory_view.addSubview_(format_pop_up)
+
+            # Set accessory view to the save panel
+            save_panel.setAccessoryView_(accessory_view)
+
+            # Set initial directory to Pictures folder
+            initial_path = os.path.expanduser("~/Pictures")
+            url = NSURL.fileURLWithPath_(initial_path)
+            save_panel.setDirectoryURL_(url)
+
+            # Run the save panel modal
+            response = save_panel.runModal()
+
+            if response == NSModalResponseOK:
+                filename = save_panel.URL().path()
+
+                # Get selected format from the pop-up button
+                selected_format = format_pop_up.titleOfSelectedItem()
+
+                # Set the appropriate extension
+                if selected_format == "PNG":
+                    extension = ".png"
+                elif selected_format == "JPEG":
+                    extension = ".jpg"
+
+                # Replace existing extension with the selected one
+                filename, ext = os.path.splitext(filename)
+                filename += extension
+
+                # Show progress dialog
+                progress = ModalView(size_hint=(0.4, 0.2))
+                progress_bar = ProgressBar(max=100, value=0)
+                progress.add_widget(progress_bar)
+                progress.open()
+
+                # Save the file on the main thread
+                def save_on_main_thread(dt):
+                    try:
+                        file_format = selected_format
+                        progress_bar.value = 50
+
+                        # Save the file
+                        success = FileManager.save_canvas_as_image(
+                            self.root.ids.paint_widget,
+                            filename,
+                            file_format=file_format
+                        )
+                        progress_bar.value = 100
+                        self._finish_save(progress, success, filename)
+                        if success and callback:
+                            callback()
+                        elif not success:
+                            self.show_error("Failed to save file")
+                    except Exception as e:
+                        self._handle_save_error(progress, str(e))
+
+                # Schedule the save operation on the main thread
+                Clock.schedule_once(save_on_main_thread, 0)
+
+            else:
+                # User canceled the save dialog
+                if callback:
+                    callback()
+
+        except Exception as e:
+            self.show_error(f"Error in save dialog: {str(e)}")
+            if callback:
+                callback()
+
+    def _finish_save(self, progress, success, filename):
+        """Handle completion of save operation"""
+        progress.dismiss()
+        if success:
+            self.root.ids.paint_widget.clear_unsaved_changes()
+            self.title = f"Paint - {os.path.basename(filename)}"
+        else:
+            self.show_error("Failed to save file")
+
+    def _handle_save_error(self, progress, error_message):
+        """Handle save operation error"""
+        progress.dismiss()
+        self.show_error(f"Error while saving: {error_message}")
+
+    def show_error(self, message):
+        """Show error popup"""
+        content = BoxLayout(orientation='vertical')
+        content.add_widget(Label(text=message))
+        button = Button(text='OK', size_hint_y=None, height=40)
+        content.add_widget(button)
+        
+        popup = Popup(title='Error', content=content,
+                     size_hint=(0.4, 0.3))
+        button.bind(on_release=popup.dismiss)
+        popup.open()
 
     def show_color_picker(self):
         content = BoxLayout(orientation='vertical')
@@ -234,9 +381,7 @@ class PaintApp(App):
             paint_widget.clear_canvas()
         
         def save_then_new():
-            # TODO: Implement save functionality
-            print("Save functionality not implemented yet")
-            create_new()
+            self.save_canvas(callback=create_new)
             
         def do_nothing():
             pass
@@ -254,6 +399,38 @@ class PaintApp(App):
     def get_application_path(self):
         """Return the path to the application root directory"""
         return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def open_image(self, *args):
+        """Handle opening an image and loading it onto the canvas."""
+        try:
+            # Create open panel
+            open_panel = NSOpenPanel.alloc().init()
+            open_panel.setTitle_("Open Image")
+            open_panel.setAllowedFileTypes_(["png", "jpg", "jpeg", "bmp"])
+            open_panel.setAllowsMultipleSelection_(False)
+            # Remember last directory
+            initial_dir = FileManager.get_last_directory()
+            open_panel.setDirectoryURL_(NSURL.fileURLWithPath_(initial_dir))
+
+            # Run the open panel modal
+            response = open_panel.runModal()
+
+            if response == NSModalResponseOK:
+                filename = open_panel.URLs()[0].path()
+                print(f"Selected file: {filename}")  # Add this line for debugging
+                # Update last directory
+                FileManager.set_last_directory(os.path.dirname(filename))
+                # Load the image onto the canvas
+                success = self.root.ids.paint_widget.load_image(filename)
+                if success:
+                    # Clear undo/redo stacks
+                    self.root.ids.paint_widget.clear_undo_history()
+                    # Update window title
+                    self.title = f"Paint - {os.path.basename(filename)}"
+                else:
+                    self.show_error("Failed to open image.")
+        except Exception as e:
+            self.show_error(f"Error opening image: {str(e)}")
 
 if __name__ == '__main__':
     try:
