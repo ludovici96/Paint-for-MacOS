@@ -42,7 +42,7 @@ I am developing a "Microsoft Paint"-like application for macOS using Python and 
    ✓ Add "Save" functionality
      ✓ Support PNG format
      ✓ Support JPEG format
-   - Add "Open Image" functionality
+   ✓ Add "Open Image" functionality
    - Add "Export" functionality
    ✓ Add keyboard shortcuts
    ✓ Add proper "New Canvas" dialog with unsaved changes warning

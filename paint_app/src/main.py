@@ -33,6 +33,10 @@ from kivy.clock import Clock  # Add this import at the top
 from Foundation import NSURL
 from AppKit import NSSavePanel, NSView, NSMakeRect, NSTextField, NSPopUpButton, NSColor, NSModalResponseOK
 from Foundation import NSOpenPanel  # Ensure NSOpenPanel is imported
+from file_utils import SUPPORTED_EXPORT_FORMATS, ExportSettings
+from AppKit import NSMenuItem, NSPopUpButton, NSSlider, NSButton, NSOnState, NSOffState
+from Foundation import NSObject
+import objc
 
 # Initialize font before creating any widgets
 FontManager.initialize()
@@ -116,6 +120,33 @@ class SaveDialog(ModalView):
         anim.bind(on_complete=lambda *x: after_fade(self))
         anim.start(self)
 
+# Define the SliderHandler class
+class SliderHandler(NSObject):
+    def init(self):
+        self = objc.super(SliderHandler, self).init()
+        if self is None: return None
+        self.dpi_value = None
+        self.quality_value = None
+        return self
+
+    def setupWithDpiValue_qualityValue_(self, dpi_value, quality_value):
+        """Objective-C method for setting up values"""
+        self.dpi_value = dpi_value
+        self.quality_value = quality_value
+        return self
+
+    def sliderChanged_(self, sender):
+        """Objective-C method to handle slider changes"""
+        try:
+            tag = sender.tag()
+            value = str(int(sender.intValue()))
+            if tag == 1:  # DPI slider
+                self.dpi_value.setStringValue_(value)
+            elif tag == 2:  # Quality slider
+                self.quality_value.setStringValue_(value)
+        except Exception as e:
+            print(f"Error in slider change: {e}")
+
 class PaintApp(App):
     def __init__(self, **kwargs):
         register_fonts()
@@ -127,6 +158,7 @@ class PaintApp(App):
         self.icon_manager = IconManager.get_instance()
         # Initialize color_popup here instead of in build
         self.color_popup = None
+        self.slider_handler = SliderHandler.alloc().init()  # Retain handler instance
 
     def build(self):
         # Bind keyboard before loading UI
@@ -431,6 +463,151 @@ class PaintApp(App):
                     self.show_error("Failed to open image.")
         except Exception as e:
             self.show_error(f"Error opening image: {str(e)}")
+
+    def export_image(self, *args):
+        """Handle image export with advanced options"""
+        try:
+            # Create save panel
+            save_panel = NSSavePanel.alloc().init()
+            save_panel.setTitle_("Export Image")
+            save_panel.setNameFieldStringValue_("Untitled")
+            
+            # Create accessory view with more vertical space for controls
+            accessory_view = NSView.alloc().initWithFrame_(NSMakeRect(0, 0, 300, 150))
+            
+            # Format selection (near top)
+            format_label = NSTextField.alloc().initWithFrame_(NSMakeRect(10, 120, 60, 25))
+            format_label.setStringValue_("Format:")
+            format_label.setEditable_(False)
+            format_label.setBezeled_(False)
+            format_label.setDrawsBackground_(False)
+            
+            format_popup = NSPopUpButton.alloc().initWithFrame_(NSMakeRect(80, 120, 200, 25))
+            formats = list(SUPPORTED_EXPORT_FORMATS.keys())
+            format_popup.addItemsWithTitles_(formats)
+            
+            # DPI selection with value display
+            dpi_label = NSTextField.alloc().initWithFrame_(NSMakeRect(10, 90, 60, 25))
+            dpi_label.setStringValue_("DPI:")
+            dpi_label.setEditable_(False)
+            dpi_label.setBezeled_(False)
+            dpi_label.setDrawsBackground_(False)
+            
+            dpi_value = NSTextField.alloc().initWithFrame_(NSMakeRect(250, 90, 40, 25))
+            dpi_value.setStringValue_("300")
+            dpi_value.setEditable_(False)
+            dpi_value.setBezeled_(False)
+            dpi_value.setDrawsBackground_(False)
+            
+            dpi_slider = NSSlider.alloc().initWithFrame_(NSMakeRect(80, 90, 160, 25))
+            dpi_slider.setMinValue_(72)
+            dpi_slider.setMaxValue_(600)
+            dpi_slider.setIntValue_(300)
+            
+            # Quality selection with value display
+            quality_label = NSTextField.alloc().initWithFrame_(NSMakeRect(10, 60, 60, 25))
+            quality_label.setStringValue_("Quality:")
+            quality_label.setEditable_(False)
+            quality_label.setBezeled_(False)
+            quality_label.setDrawsBackground_(False)
+            
+            quality_value = NSTextField.alloc().initWithFrame_(NSMakeRect(250, 60, 40, 25))
+            quality_value.setStringValue_("90")
+            quality_value.setEditable_(False)
+            quality_value.setBezeled_(False)
+            quality_value.setDrawsBackground_(False)
+            
+            quality_slider = NSSlider.alloc().initWithFrame_(NSMakeRect(80, 60, 160, 25))
+            quality_slider.setMinValue_(1)
+            quality_slider.setMaxValue_(100)
+            quality_slider.setIntValue_(90)
+            
+            # Transparency checkbox
+            transparency_check = NSButton.alloc().initWithFrame_(NSMakeRect(10, 30, 200, 25))
+            transparency_check.setTitle_("Preserve Transparency")
+            transparency_check.setButtonType_(1)
+            transparency_check.setState_(NSOnState)
+            
+            # Assign dpi_value and quality_value to handler
+            self.slider_handler.setupWithDpiValue_qualityValue_(dpi_value, quality_value)
+            
+            # Tag the sliders to identify them
+            dpi_slider.setTag_(1)
+            quality_slider.setTag_(2)
+            
+            # Set up the action for both sliders
+            action = objc.selector(self.slider_handler.sliderChanged_,
+                                 signature=b'v@:@')
+            
+            dpi_slider.setTarget_(self.slider_handler)
+            dpi_slider.setAction_(action)
+            
+            quality_slider.setTarget_(self.slider_handler)
+            quality_slider.setAction_(action)
+            
+            # Store handler reference to prevent garbage collection
+            self._current_handler = self.slider_handler
+            
+            # Add all controls to accessory view
+            for control in [format_label, format_popup, 
+                            dpi_label, dpi_slider, dpi_value,
+                            quality_label, quality_slider, quality_value,
+                            transparency_check]:
+                accessory_view.addSubview_(control)
+            
+            save_panel.setAccessoryView_(accessory_view)
+            
+            # Set initial directory and allowed types
+            initial_path = FileManager.get_last_directory()
+            url = NSURL.fileURLWithPath_(initial_path)
+            save_panel.setDirectoryURL_(url)
+            save_panel.setAllowedFileTypes_([SUPPORTED_EXPORT_FORMATS[f]['extension'][1:] for f in formats])
+            
+            # Run panel
+            response = save_panel.runModal()
+            
+            if response == NSModalResponseOK:
+                filename = save_panel.URL().path()
+                FileManager.set_last_directory(os.path.dirname(filename))
+                
+                # Create settings object with current values
+                settings = ExportSettings(
+                    format=format_popup.titleOfSelectedItem(),
+                    dpi=int(dpi_slider.doubleValue()),
+                    quality=int(quality_slider.doubleValue()),
+                    transparency=(transparency_check.state() == NSOnState)
+                )
+                
+                # Show progress dialog
+                progress = ModalView(size_hint=(0.4, 0.2))
+                progress_bar = ProgressBar(max=100, value=0)
+                progress.add_widget(progress_bar)
+                progress.open()
+                
+                def export_on_main_thread(dt):
+                    try:
+                        progress_bar.value = 50
+                        success = FileManager.export_canvas(
+                            self.root.ids.paint_widget,
+                            filename,
+                            settings
+                        )
+                        progress_bar.value = 100
+                        progress.dismiss()
+                        
+                        if success:
+                            self.title = f"Paint - {os.path.basename(filename)} (Exported)"
+                        else:
+                            self.show_error("Failed to export file")
+                            
+                    except Exception as e:
+                        progress.dismiss()
+                        self.show_error(f"Error during export: {str(e)}")
+                
+                Clock.schedule_once(export_on_main_thread, 0)
+                
+        except Exception as e:
+            self.show_error(f"Error in export dialog: {str(e)}")
 
 if __name__ == '__main__':
     try:

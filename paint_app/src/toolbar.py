@@ -92,11 +92,11 @@ class MenuBar(BoxLayout):
         self.file_dropdown = self.create_styled_dropdown()
         file_button.dropdown = self.file_dropdown
         file_items = [
-            ('New Canvas', 'meta+N', lambda x: self.app.new_canvas()),
-            ('Open...', 'meta+O', lambda x: App.get_running_app().open_image()),
-            ('Save', 'meta+S', lambda x: self.app.save_canvas()),
-            ('Save As...', 'meta+shift+S', lambda x: print('Save As - Not implemented')),
-            ('Export...', 'meta+E', lambda x: print('Export - Not implemented')),
+            ('New Canvas', lambda x: self.app.new_canvas()),
+            ('Open...', lambda x: self.app.open_image()),
+            ('Save', lambda x: self.app.save_canvas()),
+            ('Save As...', 'cmd+shift+S', lambda x: self.app.save_canvas()),
+            ('Export...', 'cmd+E', lambda x: self.app.export_image()),
         ]
         self.create_dropdown_items(self.file_dropdown, file_items)
         file_button.bind(on_release=self.file_dropdown.open)
