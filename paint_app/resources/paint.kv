@@ -5,6 +5,7 @@
 
 BoxLayout:
     orientation: 'vertical'
+    spacing: 0  # Add this line to remove vertical spacing between children
     canvas.before:
         Color:
             rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.12, 0.12, 0.12, 1
@@ -18,6 +19,7 @@ BoxLayout:
         height: '22dp'  # macOS standard menu height
         spacing: '0dp'
         padding: '0dp'
+        # Remove any bottom margin/padding here
         canvas.before:
             Color:
                 rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
@@ -211,13 +213,14 @@ BoxLayout:
                 background_color: 0.3, 0.3, 0.3, 1
                 on_release: app.show_color_picker()
     
-    # Quick Access Toolbar
+    # Quick Access Toolbar - adjust position and padding
     BoxLayout:
         id: quick_toolbar
         size_hint_y: None
-        height: '32dp'
-        spacing: '4dp'
-        padding: '6dp'
+        height: '25dp'
+        spacing: '0dp'
+        padding: [0, 0, 0, 0]  # Adjust vertical padding to be minimal
+        pos_hint: {'top': 1}  # Force toolbar to stick to top
         canvas.before:
             Color:
                 rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
@@ -230,7 +233,7 @@ BoxLayout:
             orientation: 'horizontal'
             spacing: '4dp'
             size_hint_x: None
-            width: '280dp'
+            width: '110dp' # "tools" toolbar width
             padding: '4dp'
             canvas.before:
                 Color:
@@ -275,7 +278,7 @@ BoxLayout:
             orientation: 'horizontal'
             spacing: '4dp'
             size_hint_x: None
-            width: '220dp'
+            width: '120dp'
             padding: '4dp'
             canvas.before:
                 Color:
@@ -319,7 +322,7 @@ BoxLayout:
             orientation: 'horizontal'
             spacing: '4dp'
             size_hint_x: None
-            width: '100dp'
+            width: '70dp'
             padding: '4dp'
             canvas.before:
                 Color:
