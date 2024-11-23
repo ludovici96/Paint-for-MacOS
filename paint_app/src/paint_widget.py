@@ -1,5 +1,5 @@
 from kivy.uix.widget import Widget
-from kivy.graphics import Color, Line, Bezier
+from kivy.graphics import Color, Line, Bezier, Rectangle  # Add Rectangle to imports
 from kivy.properties import ColorProperty, NumericProperty, ObjectProperty
 from collections import deque
 from kivy.core.window import Window
@@ -178,3 +178,37 @@ class PaintWidget(Widget):
             command = self.redo_stack.pop()
             command.redo(self.canvas)
             self.undo_stack.append(command)
+
+    def has_unsaved_changes(self):
+        """Check if there are any unsaved changes"""
+        return len(self.undo_stack) > 0
+    
+    def clear_canvas(self):
+        """Clear the canvas and reset drawing history"""
+        # First store the background color and rectangle
+        with self.canvas:
+            bg_color = Color(1, 1, 1, 1)  # White background
+            bg_rect = Rectangle(pos=self.pos, size=self.size)
+        
+        # Clear everything
+        self.canvas.clear()
+        
+        # Restore the background
+        with self.canvas:
+            self.canvas.add(bg_color)
+            self.canvas.add(bg_rect)
+        
+        # Reset all state
+        self.undo_stack.clear()
+        self.redo_stack.clear()
+        self.points = []
+        self.current_instructions = None
+        
+        # Properly cleanup any active tool
+        if self.current_tool and hasattr(self.current_tool, 'deactivate'):
+            self.current_tool.deactivate()
+        self.current_tool = None
+        
+        # Reset to default state
+        self.current_color = [0, 0, 0, 1]
+        self.line_width = 2
