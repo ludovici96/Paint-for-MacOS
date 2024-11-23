@@ -95,8 +95,8 @@ class MenuBar(BoxLayout):
             ('New Canvas', lambda x: self.app.new_canvas()),
             ('Open...', lambda x: self.app.open_image()),
             ('Save', lambda x: self.app.save_canvas()),
-            ('Save As...', 'cmd+shift+S', lambda x: self.app.save_canvas()),
-            ('Export...', 'cmd+E', lambda x: self.app.export_image()),
+            #('Save As...', 'cmd+shift+S', lambda x: self.app.save_canvas()),
+            ('Export...', lambda x: self.app.export_image()),
         ]
         self.create_dropdown_items(self.file_dropdown, file_items)
         file_button.bind(on_release=self.file_dropdown.open)
@@ -107,12 +107,12 @@ class MenuBar(BoxLayout):
         self.edit_dropdown = self.create_styled_dropdown()
         edit_button.dropdown = self.edit_dropdown  # Store dropdown reference
         edit_items = [
-            ('Undo', 'meta+Z', lambda x: self.app.root.ids.paint_widget.undo()),
-            ('Redo', 'meta+shift+Z', lambda x: self.app.root.ids.paint_widget.redo()),
-            ('Cut', 'meta+X', lambda x: print('Cut - Not implemented')),
-            ('Copy', 'meta+C', lambda x: print('Copy - Not implemented')),
-            ('Paste', 'meta+V', lambda x: print('Paste - Not implemented')),
-            ('Clear All', 'meta+delete', lambda x: self.app.root.ids.paint_widget.canvas.clear()),
+            ('Undo', lambda x: self.app.root.ids.paint_widget.undo()),
+            ('Redo', lambda x: self.app.root.ids.paint_widget.redo()),
+            ('Cut', 'cmd+X', lambda x: print('Cut - Not implemented')),
+            ('Copy', 'cmd+C', lambda x: print('Copy - Not implemented')),
+            ('Paste', 'cmd+V', lambda x: print('Paste - Not implemented')),
+            ('Clear All', lambda x: self.app.root.ids.paint_widget.canvas.clear()),
         ]
         self.create_dropdown_items(self.edit_dropdown, edit_items)
         edit_button.bind(on_release=self.edit_dropdown.open)
