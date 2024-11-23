@@ -301,7 +301,7 @@ class PaintWidget(Widget):
             
             # Store current canvas state
             old_size = list(self.size)
-            old_instructions = self.canvas.children[:]  # Create a copy of current instructions
+            old_instructions = self.canvas.children[:]
             print(f"Current canvas state:")
             print(f"- Size: {old_size}")
             print(f"- Instructions count: {len(old_instructions)}")
@@ -315,27 +315,35 @@ class PaintWidget(Widget):
             # Create texture
             texture = Texture.create(size=pil_image.size, colorfmt='rgba', bufferfmt='ubyte')
             texture.blit_buffer(image_data, colorfmt='rgba', bufferfmt='ubyte')
-            texture.flip_vertical()
             
             print(f"Image processed:")
             print(f"- Image size: {pil_image.size}")
             print(f"- Texture created: {texture.size}")
             
-            # Create command before modifying canvas
+            # Update widget size to match image
+            self.size = pil_image.size
+            
+            # Clear canvas and draw new image
+            self.canvas.clear()
+            with self.canvas:
+                # Draw white background
+                Color(1, 1, 1, 1)
+                Rectangle(pos=self.pos, size=self.size)
+                # Draw the image
+                Color(1, 1, 1, 1)  # Reset color to white
+                Rectangle(texture=texture, pos=self.pos, size=self.size)
+            
+            # Create and add command to undo stack
             command = ImageLoadCommand(
                 self,
                 old_instructions,
-                None,  # Will be set in ImageLoadCommand
+                self.canvas.children[:],  # Current instructions after loading
                 old_size,
                 pil_image.size,
                 texture
             )
             
-            # Update canvas with new image
-            self.canvas.clear()
-            self.size = pil_image.size
-            
-            print("Adding command to undo stack")
+            print(f"Adding command to undo stack")
             print(f"- Undo stack size before: {len(self.undo_stack)}")
             self.undo_stack.append(command)
             self.redo_stack.clear()
