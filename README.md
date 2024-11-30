@@ -63,8 +63,8 @@ An open-source, Microsoft Paint-like application built with Python and Kivy, spe
   python3 src/main.py
   ```
 
-**Future Plans**
-
+**Future Plans:**
+```
 * **Layers Support**
   - Implementing layers for complex editing
   - Layer opacity control
@@ -101,3 +101,4 @@ An open-source, Microsoft Paint-like application built with Python and Kivy, spe
   - Color balance
   - Blur/Sharpen effects
   - Basic artistic filters
+```
