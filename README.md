@@ -38,7 +38,6 @@ An open-source, Microsoft Paint-like application built with Python and Kivy, spe
 ## Installation
 
 1. **Clone the repository**:
-
    ```bash
    git clone https://github.com/ludovici96/Paint-for-MacOS.git
    ```
