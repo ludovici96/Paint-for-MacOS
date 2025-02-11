@@ -1,0 +1,391 @@
+#:import Window kivy.core.window.Window
+
+# This is the Kivy language file that defines the application's UI layout and styling.
+# It contains widget hierarchies, bindings, and visual properties for the entire application.
+
+BoxLayout:
+    orientation: 'vertical'
+    spacing: 0  # Add this line to remove vertical spacing between children
+    canvas.before:
+        Color:
+            rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.12, 0.12, 0.12, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    
+    BoxLayout:
+        id: toolbar
+        size_hint_y: None
+        height: '22dp'  # macOS standard menu height
+        spacing: '0dp'
+        padding: '0dp'
+        # Remove any bottom margin/padding here
+        canvas.before:
+            Color:
+                rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+            Color:
+                rgba: 0.8, 0.8, 0.8, 1 if not Window.is_dark_theme else 0.3, 0.3, 0.3, 1
+            Rectangle:
+                pos: self.x, self.y
+                size: self.width, 1
+
+        # Brush Size Group with modern styling
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '6dp'  # Reduced from 8dp
+            size_hint_x: None
+            width: '300dp'  # Reduced from 320dp
+            padding: '6dp'  # Reduced from 8dp
+            canvas.before:
+                # Main background
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]  # Increased radius
+                
+                # Subtle highlight
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Brush Size'
+                size_hint_x: None
+                width: '80dp'  # Reduced from 90dp
+                color: 0.95, 0.95, 0.95, 1  # Brighter text
+                font_size: '13sp'  # Reduced from 15sp
+                bold: True
+            
+            Slider:
+                id: brush_size
+                min: 1
+                max: 20
+                value: 2
+                size_hint_x: None
+                width: '190dp'  # Reduced from 200dp
+                cursor_size: ('14dp', '14dp')  # Reduced from 16dp
+                background_width: '3dp'  # Reduced from 4dp
+                on_value: paint_widget.set_line_width(self.value)
+                # Modern slider colors
+                value_track: True
+                value_track_color: 0.4, 0.4, 0.4, 1
+                value_track_width: '3dp'  # Reduced from 4dp
+                background_color: 0.25, 0.25, 0.25, 1
+
+        # Current Color Indicator
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '10dp'
+            size_hint_x: None
+            width: '80dp'  # Reduced from 120dp
+            padding: '0dp'  # Changed from 6dp to 3dp to match Color Palette
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Current'
+                size_hint_x: None
+                width: '40dp'  # Reduced from 50dp
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+            
+            Button:
+                id: current_color
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: paint_widget.current_color
+                on_release: app.show_color_picker()
+
+        # Color Palette Group
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '6dp'
+            size_hint_x: None
+            width: '345dp'
+            padding: '0dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Colors'
+                size_hint_x: None
+                width: '60dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+
+            # Basic Colors
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 0, 0, 0, 1
+                on_release: paint_widget.set_color([0, 0, 0, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 1, 0, 0, 1
+                on_release: paint_widget.set_color([1, 0, 0, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 0, 1, 0, 1
+                on_release: paint_widget.set_color([0, 1, 0, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 0, 0, 1, 1
+                on_release: paint_widget.set_color([0, 0, 1, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 1, 1, 0, 1
+                on_release: paint_widget.set_color([1, 1, 0, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 1, 0, 1, 1
+                on_release: paint_widget.set_color([1, 0, 1, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 0, 1, 1, 1
+                on_release: paint_widget.set_color([0, 1, 1, 1])
+            
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                background_normal: ''
+                background_color: 1, 1, 1, 1
+                on_release: paint_widget.set_color([1, 1, 1, 1])
+            
+            # Custom Color Button
+            Button:
+                size_hint: None, None
+                size: '24dp', '24dp'
+                text: '+'
+                font_size: '20sp'
+                background_normal: ''
+                background_color: 0.3, 0.3, 0.3, 1
+                on_release: app.show_color_picker()
+    
+    # Quick Access Toolbar - adjust position and padding
+    BoxLayout:
+        id: quick_toolbar
+        size_hint_y: None
+        height: '25dp'
+        spacing: '0dp'
+        padding: [0, 0, 0, 0]  # Adjust vertical padding to be minimal
+        pos_hint: {'top': 1}  # Force toolbar to stick to top
+        canvas.before:
+            Color:
+                rgba: 0.98, 0.98, 0.98, 1 if not Window.is_dark_theme else 0.2, 0.2, 0.2, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Tool Group with modern styling
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '110dp' # "tools" toolbar width
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Tools'
+                size_hint_x: None
+                width: '40dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+
+            # Tool Buttons
+            ToolButton:
+                tool: 'PENCIL'
+                icon: 'pencil'
+                tooltip: 'Pencil Tool (P)'
+                
+            ToolButton:
+                tool: 'BRUSH'
+                icon: 'brush'
+                tooltip: 'Brush Tool (B)'
+                
+            ToolButton:
+                tool: 'ERASER'
+                icon: 'eraser'
+                tooltip: 'Eraser Tool (E)'
+
+        # Shape Tools Group
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '120dp'
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Shapes'
+                size_hint_x: None
+                width: '50dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+                    
+            ToolButton:
+                tool: 'LINE'
+                icon: 'line'
+                tooltip: 'Line Tool (L)'
+                
+            ToolButton:
+                tool: 'RECTANGLE'
+                icon: 'rectangle'
+                tooltip: 'Rectangle Tool (R)'
+                
+            ToolButton:
+                tool: 'CIRCLE'
+                icon: 'circle'
+                tooltip: 'Circle Tool (C)'
+
+        # Fill Tool Group
+        BoxLayout:
+            orientation: 'horizontal'
+            spacing: '4dp'
+            size_hint_x: None
+            width: '70dp'
+            padding: '4dp'
+            canvas.before:
+                Color:
+                    rgba: 0.2, 0.2, 0.2, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [6,]
+                Color:
+                    rgba: 1, 1, 1, 0.05
+                RoundedRectangle:
+                    pos: self.x, self.y + self.height/2
+                    size: self.width, self.height/2
+                    radius: [6, 6, 0, 0]
+            
+            Label:
+                text: 'Fill'
+                size_hint_x: None
+                width: '30dp'
+                color: 0.95, 0.95, 0.95, 1
+                font_size: '13sp'
+                bold: True
+            
+            ToolButton:
+                tool: 'FILL'
+                icon: 'fill'
+                tooltip: 'Fill Tool (F)'
+            
+        Widget:
+            # Spacer to push everything to the left
+            size_hint_x: 1
+
+    # Canvas
+    PaintWidget:
+        id: paint_widget
+        canvas.before:
+            Color:
+                rgba: 1, 1, 1, 1  # White background
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+<ToolButton@ButtonBehavior+Image>:
+    icon: ''  # Icon name property
+    source: app.get_icon_path(self.icon) if self.icon else ''
+    size_hint: None, None
+    size: '16dp', '16dp'
+    allow_stretch: False
+    # keep_ratio: True  # Removed deprecated property
+    canvas.before:
+        Color:
+            # When active, use a brighter color in both light and dark themes
+            rgba: (0.4, 0.7, 1, 1) if self.active else ((0.85, 0.85, 0.85, 1) if not Window.is_dark_theme else (0.3, 0.3, 0.3, 1))
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [4,]
+    # Add a subtle glow effect when active
+    canvas.after:
+        Color:
+            rgba: (0.4, 0.7, 1, 0.2) if self.active else (0, 0, 0, 0)
+        RoundedRectangle:
+            pos: self.x - 2, self.y - 2
+            size: self.width + 4, self.height + 4
+            radius: [6,]
+    on_release: app.select_tool(self.tool)

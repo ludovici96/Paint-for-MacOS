@@ -1,0 +1,90 @@
+PAINT APP TODO LIST
+==================
+
+I am developing a "Microsoft Paint"-like application for macOS using Python and the Kivy library.
+
+1. Project Setup
+   ✓ Create basic project structure
+   ✓ Create requirements.txt
+   ✓ Create README.md with project description and setup instructions
+   ✓ Add .gitignore file
+
+2. Basic Drawing Implementation
+   ✓ Create basic window
+   ✓ Implement basic drawing canvas
+   ✓ Add brush color selection
+   ✓ Add brush size slider
+   ✓ Implement proper line drawing with smooth curves
+   ✓ Add undo/redo functionality
+
+3. Drawing Tools
+   ✓ Implement tool selection system
+   / Add basic tools:
+     ✓ Pencil (free drawing)
+     ✓ Brush (with different styles)
+     ✓ Eraser
+     ✓ Line tool
+     ✓ Rectangle tool
+     ✓ Circle tool
+     / Fill tool (paint bucket) (almost done, needs to be able to undo/redo)
+   ✓ Add color palette widget
+   ✓ Add custom color picker
+
+4. UI Improvements
+   ✓ Create proper toolbar layout
+   ✓ Add tool icons
+   ✓ Add status bar showing:
+     ✓ Current tool
+     ✓ Current color
+
+5. File Operations
+   ✓ Implement "New Canvas" functionality
+   ✓ Add "Save" functionality
+     ✓ Support PNG format
+     ✓ Support JPEG format
+   ✓ Add "Open Image" functionality
+   ✓ Add "Export" functionality
+   ✓ Add keyboard shortcuts
+   ✓ Add proper "New Canvas" dialog with unsaved changes warning
+   ✓ Add macOS-style save dialog with icons and animations
+
+6. Advanced Features
+   - Add layers support
+   - Implement selection tool
+   - Add text tool
+   - Add zoom functionality
+   - Add canvas resize option
+   - Add image filters/effects
+
+7. Testing
+   - Write unit tests for:
+     * Drawing functions
+     * File operations
+     * Tool implementations
+   - Add integration tests
+   - Test on different MacOS versions
+
+8. Polish & Documentation
+   - Add proper error handling
+   - Add loading indicators for operations
+   - Write user documentation
+   - Add tooltips
+   - Create example artwork
+   - Record demo video
+
+9. Deployment
+   - Create MacOS executable
+   - Add installation instructions
+   - Create release package
+   - Add version numbering
+
+Note: ✓ = Completed
+      - = To Do
+      / = almost done
+
+NEXT STEPS:
+1. Add "Open Image" functionality
+2. Add layers support
+3. Add zoom functionality
+
+
