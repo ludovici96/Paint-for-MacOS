@@ -17,7 +17,7 @@ from kivy.uix.dropdown import DropDown
 from kivy.graphics import Color, Rectangle
 from theme_manager import ThemeManager
 from font_manager import FontManager
-from toolbar import MenuBar, ToolButton  # Update this line to import ToolButton
+from toolbar import MenuBar, ToolButton
 from icon_manager import IconManager
 from kivy.uix.modalview import ModalView
 from kivy.uix.label import Label
@@ -29,10 +29,10 @@ from file_utils import FileManager, SUPPORTED_FORMATS
 from kivy.uix.progressbar import ProgressBar
 import threading
 import os
-from kivy.clock import Clock  # Add this import at the top
+from kivy.clock import Clock
 from Foundation import NSURL
 from AppKit import NSSavePanel, NSView, NSMakeRect, NSTextField, NSPopUpButton, NSColor, NSModalResponseOK
-from Foundation import NSOpenPanel  # Ensure NSOpenPanel is imported
+from Foundation import NSOpenPanel
 from file_utils import SUPPORTED_EXPORT_FORMATS, ExportSettings
 from AppKit import NSMenuItem, NSPopUpButton, NSSlider, NSButton, NSOnState, NSOffState
 from Foundation import NSObject

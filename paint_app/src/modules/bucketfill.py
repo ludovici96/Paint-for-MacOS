@@ -3,7 +3,65 @@ from .abstract_tool import AbstractTool
 import numpy as np
 from kivy.core.image import Image as CoreImage
 from kivy.graphics.texture import Texture
-import scipy.ndimage  # Make sure to import scipy.ndimage
+import scipy.ndimage
+
+
+class FillCommand:
+    """Command class for fill operations to integrate with the global undo/redo system"""
+    def __init__(self, canvas_widget, old_image_data, new_image_data, texture, widget_size, widget_pos, old_instructions):
+        """
+        Initialize a fill command.
+        
+        Args:
+            canvas_widget: Reference to the PaintWidget
+            old_image_data: Numpy array of pixel data before fill
+            new_image_data: Numpy array of pixel data after fill
+            texture: The texture to update
+            widget_size: Size of the widget when fill was performed
+            widget_pos: Position of the widget when fill was performed
+            old_instructions: Canvas instructions before the fill (to restore drawing commands)
+        """
+        self.canvas_widget = canvas_widget
+        self.old_image_data = old_image_data.copy()  # Store a copy of the old state
+        self.new_image_data = new_image_data.copy()  # Store a copy of the new state
+        self.texture = texture
+        self.widget_size = tuple(widget_size)
+        self.widget_pos = tuple(widget_pos)
+        self.old_instructions = old_instructions[:]  # Store a copy of the canvas instructions
+    
+    def undo(self, canvas):
+        """Restore the canvas to the state before the fill operation"""
+        # Restore the old canvas instructions (this includes all drawing commands)
+        canvas.clear()
+        for instr in self.old_instructions:
+            try:
+                canvas.add(instr)
+            except Exception as e:
+                print(f"Error restoring instruction during fill undo: {e}")
+    
+    def redo(self, canvas):
+        """Reapply the fill operation"""
+        # Create a new texture from new image data
+        height, width = self.new_image_data.shape[:2]
+        from kivy.graphics.texture import Texture
+        new_texture = Texture.create(size=(width, height), colorfmt='rgba', bufferfmt='ubyte')
+        
+        # Blit the new image data to the new texture
+        pixels = self.new_image_data.tobytes()
+        new_texture.blit_buffer(pixels, colorfmt='rgba', bufferfmt='ubyte')
+        new_texture.flip_vertical()
+        
+        # Update the canvas widget's texture reference
+        self.texture = new_texture
+        
+        # Redraw the canvas
+        canvas.clear()
+        with canvas:
+            Color(1, 1, 1, 1)
+            Rectangle(pos=self.widget_pos, size=self.widget_size)
+            Color(1, 1, 1, 1)
+            Rectangle(texture=new_texture, pos=self.widget_pos, size=self.widget_size)
+
 
 class FillTool(AbstractTool):
     name = 'bucket_fill'
@@ -14,8 +72,6 @@ class FillTool(AbstractTool):
         self.active = False                 # Whether the tool is active
         self.image_data = None              # The image data as a numpy array
         self.texture = None                 # The texture used for drawing
-        self.undo_stack = []                # Stack for undo functionality
-        self.redo_stack = []                # Stack for redo functionality
         self.canvas_widget = canvas_widget  # Reference to the canvas widget
 
     def activate(self):
@@ -90,14 +146,27 @@ class FillTool(AbstractTool):
         if np.array_equal(target_color, fill_color):
             return
 
-        # Save the current image data for undo
-        previous_image_data = pixel_data.copy()
-        self.undo_stack.append(previous_image_data)
-        # Clear the redo stack
-        self.redo_stack.clear()
+        # Save the current image data for undo (before modification)
+        old_image_data = pixel_data.copy()
+        
+        # Save the current canvas instructions before we clear them
+        old_instructions = self.canvas_widget.canvas.children[:]
 
         # Perform the flood fill using optimized method
         self.flood_fill(pixel_data, x, y, target_color, fill_color, self.tolerance)
+
+        # Create a FillCommand and add it to the global undo stack
+        command = FillCommand(
+            self.canvas_widget,
+            old_image_data,
+            pixel_data,
+            self.texture,
+            self.canvas_widget.size,
+            self.canvas_widget.pos,
+            old_instructions
+        )
+        self.canvas_widget.undo_stack.append(command)
+        self.canvas_widget.redo_stack.clear()
 
         # Update the texture with the modified image data
         new_pixels = pixel_data.tobytes()
@@ -131,31 +200,3 @@ class FillTool(AbstractTool):
 
         # Fill the region
         pixel_data[region_mask, :3] = fill_color
-
-    def undo(self):
-        if self.undo_stack:
-            # Save current state for redo
-            self.redo_stack.append(self.image_data.copy())
-            # Restore previous state
-            self.image_data = self.undo_stack.pop()
-            # Update the texture
-            new_pixels = self.image_data.tobytes()
-            self.texture.blit_buffer(new_pixels, colorfmt='rgba', bufferfmt='ubyte')
-            # Redraw the canvas
-            with self.canvas_widget.canvas:
-                self.canvas_widget.canvas.clear()
-                Rectangle(texture=self.texture, pos=self.canvas_widget.pos, size=self.canvas_widget.size)
-
-    def redo(self):
-        if self.redo_stack:
-            # Save current state for undo
-            self.undo_stack.append(self.image_data.copy())
-            # Restore next state
-            self.image_data = self.redo_stack.pop()
-            # Update the texture
-            new_pixels = self.image_data.tobytes()
-            self.texture.blit_buffer(new_pixels, colorfmt='rgba', bufferfmt='ubyte')
-            # Redraw the canvas
-            with self.canvas_widget.canvas:
-                self.canvas_widget.canvas.clear()
-                Rectangle(texture=self.texture, pos=self.canvas_widget.pos, size=self.canvas_widget.size)
